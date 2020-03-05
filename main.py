@@ -4,8 +4,6 @@ from object_detection.object_detector.object_detector import ObjectDetector
 from object_detection.obstacle_detector.obstacle_detector import ObstacleDetector
 import logging
 import sys
-from statemachine.steering_command_generator import StateMachine
-from statemachine.states.start import Start
 
 # Config Logging
 logging.basicConfig(
@@ -45,9 +43,7 @@ def main():
 
 
 def __start_state_machine():
-    state_machine = StateMachine(Start())
-    state_machine.request1()
-    state_machine.request2()
+    pass
 
 
 if __name__ == '__main__':
