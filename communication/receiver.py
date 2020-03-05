@@ -5,31 +5,30 @@ import logging
 
 class Receiver:
 
-    def __init__(self, node_config_section):
-        self.__loadConfiguration(node_config_section)
-        self.__openPullSocket()
-        self.receivedCounter = 0
+    def __init__(self, node_config_section: str):
+        self.__load_configuration(node_config_section)
+        self.__open_subscribe_socket()
+        self.__received_counter = 0
 
-    def __loadConfiguration(self, node_config_section):
+    def __load_configuration(self, node_config_section: str):
         config = configparser.ConfigParser()
         config.read('config.ini')
-        self.host = config.get(node_config_section, 'HOST')
-        self.port = config.get(node_config_section, 'PORT')
-        self.logger = logging.getLogger(node_config_section + "_RECEIVER")
+        self.__host = config.get(node_config_section, 'HOST')
+        self.__port = config.get(node_config_section, 'PORT')
+        self.__logger = logging.getLogger(node_config_section + "_RECEIVER")
 
-    # noinspection PyUnresolvedReferences
-    def __openPullSocket(self):
-        self.socket = zmq.Context().socket(zmq.SUB)
-        self.socket.setsockopt_string(zmq.SUBSCRIBE, "")
-        self.socket.connect("tcp://%s:%s" % (self.host, self.port))
-        self.logger.info("connect to host: tcp://%s:%s" % (self.host, self.port))
+    def __open_subscribe_socket(self):
+        self.__socket = zmq.Context().socket(zmq.SUB)
+        self.__socket.setsockopt_string(zmq.SUBSCRIBE, "")
+        self.__socket.connect("tcp://%s:%s" % (self.__host, self.__port))
+        self.__logger.info("connect to host: tcp://%s:%s" % (self.__host, self.__port))
 
     def receive(self):
-        message = self.socket.recv_pyobj()
-        self.receivedCounter += 1
-        self.logger.debug("received (%s): %s" % (self.receivedCounter, message))
-        return message
+        py_object = self.__socket.recv_pyobj()
+        self.__received_counter += 1
+        self.__logger.debug("received (%s): %s" % (self.__received_counter, py_object))
+        return py_object
 
     def close(self):
-        self.socket.close()
-        self.logger.info("disconnect from host: tcp://%s:%s" % (self.host, self.port))
+        self.__socket.close()
+        self.__logger.info("disconnect from host: tcp://%s:%s" % (self.__host, self.__port))

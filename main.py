@@ -47,5 +47,5 @@ def __start_state_machine():
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     __start_state_machine()

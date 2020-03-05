@@ -5,28 +5,28 @@ import logging
 
 class Sender:
 
-    def __init__(self, node_config_section):
-        self._loadConfiguration(node_config_section)
-        self._openPushSocket()
-        self.sendCounter = 0
+    def __init__(self, node_config_section: str):
+        self.__load_configuration(node_config_section)
+        self.__open_publish_socket()
+        self.__send_counter = 0
 
-    def _loadConfiguration(self, node_config_section):
+    def __load_configuration(self, node_config_section: str):
         config = configparser.ConfigParser()
         config.read('config.ini')
-        self.host = config.get(node_config_section, 'HOST')
-        self.port = config.get(node_config_section, 'PORT')
-        self.logger = logging.getLogger(node_config_section + "_SENDER")
+        self.__host = config.get(node_config_section, 'HOST')
+        self.__port = config.get(node_config_section, 'PORT')
+        self.__logger = logging.getLogger(node_config_section + "_SENDER")
 
-    def _openPushSocket(self):
-        self.socket = zmq.Context().socket(zmq.PUB)  # pylint: disable=no-member
-        self.socket.bind("tcp://%s:%s" % (self.host, self.port))
-        self.logger.info("bind to host: tcp://%s:%s" % (self.host, self.port))
+    def __open_publish_socket(self):
+        self.__socket = zmq.Context().socket(zmq.PUB)  # pylint: disable=no-member
+        self.__socket.bind("tcp://%s:%s" % (self.__host, self.__port))
+        self.__logger.info("bind to host: tcp://%s:%s" % (self.__host, self.__port))
 
-    def send(self, message):
-        self.socket.send_pyobj(message)
-        self.sendCounter += 1
-        self.logger.debug("send (%s): %s" % (self.sendCounter, message))
+    def send(self, py_object):
+        self.__socket.send_pyobj(py_object)
+        self.__send_counter += 1
+        self.__logger.debug("send (%s): %s" % (self.__send_counter, py_object))
 
     def close(self):
-        self.socket.close()
-        self.logger.info("unbind from host: tcp://%s:%s" % (self.host, self.port))
+        self.__socket.close()
+        self.__logger.info("unbind from host: tcp://%s:%s" % (self.__host, self.__port))

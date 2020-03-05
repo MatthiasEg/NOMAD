@@ -1,38 +1,34 @@
-from geometry.rectangle import Rectangle
-from geometry.point import Point
+from typing import List, Optional
+
+from object_detection.bounding_box import BoundingBox
+from object_detection.object_detector.object_detector_result import Distance
+
+
+class Pylon:
+
+    def __init__(self, bounding_box: BoundingBox, distance: Distance, dangerous: bool):
+        self.bounding_box = bounding_box
+        self.distance = distance
+        self.dangerous = dangerous
+
+    def __str__(self):
+        return "(bounding_box='%s', distance='%s', dangerous='%s')" % (
+            self.bounding_box, self.distance, self.dangerous)
+
 
 class PylonDetectorResult:
 
-    def __init__(self, pylons):
+    def __init__(self, pylons: List[Pylon]):
         self.pylons = pylons
-        
-    def getPylonWhichIntersectRectangle(self, rectangle):
+
+    def get_any_pylon_which_intersects(self, bounding_box: BoundingBox) -> Optional[Pylon]:
         for pylon in self.pylons:
-            if(pylon.boundingBox.intersects(rectangle)):
+            if pylon.bounding_box.intersects(bounding_box):
                 return pylon
         return None
 
     def __str__(self):
-        stringRepresentation = ""
+        pylon_string_representation = ""
         for pylon in self.pylons:
-            stringRepresentation += str(pylon)
-        return stringRepresentation
-
-class Pylon:
-
-    def __init__(self, rectangleCenterPoint, width, height, distance, isDangerous):
-        self.rectangleCenterPoint = rectangleCenterPoint
-        self.width = width
-        self.height = height
-        self.distance = distance
-        self.boundingBox = self.createBoundingBox()
-        self.isDangerous = isDangerous
-
-    def createBoundingBox(self):
-        bottomLeft = Point(self.rectangleCenterPoint.x - self.width/2, self.rectangleCenterPoint.y - self.height/2)
-        topRight = Point(self.rectangleCenterPoint.x + self.width/2, self.rectangleCenterPoint.y + self.height/2)
-        return Rectangle(bottomLeft, topRight)
-
-    def __str__(self):
-     return "(rectangleCenterPoint='%s', width='%s', height='%s', distance='%s', boundingBox='%s')" % (self.rectangleCenterPoint, self.width, self.height, self.distance, self.boundingBox)
-
+            pylon_string_representation += str(pylon)
+        return pylon_string_representation

@@ -3,8 +3,11 @@ colorama==0.4.3
 isort==4.3.21
 lazy-object-proxy==1.4.3
 mccabe==0.6.1
+mpmath==1.1.0
+numpy==1.18.1
 pylint==2.4.4
 pyzmq==19.0.0
+Shapely==1.7.0
 six==1.14.0
 transitions==0.7.2
 wrapt==1.11.2

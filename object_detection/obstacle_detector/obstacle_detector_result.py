@@ -1,15 +1,30 @@
+from shapely.geometry import Point
+from typing import List, Optional
+from object_detection.bounding_box import BoundingBox
+
+
+class Edge:
+
+    def __init__(self, start: Point, end: Point):
+        self.bounding_box = BoundingBox.of_line(start, end)
+
+    def __str__(self):
+        return str(self.bounding_box)
+
+
 class ObstacleDetectorResult:
 
-    def __init__(self, contact_top, distance_top, contact_bottom, distance_bottom, edges):
-        self.contactTop = contact_top
-        self.distanceTop = distance_top
-        self.contactBottom = contact_bottom
-        self.distanceBottom = distance_bottom
+    def __init__(self, contact_top: bool, distance_top: float, contact_bottom: bool, distance_bottom: float,
+                 edges: List[Edge]):
+        self.contact_top = contact_top
+        self.distance_top = distance_top
+        self.contact_bottom = contact_bottom
+        self.distance_bottom = distance_bottom
         self.edges = edges
 
-    def getEdgeWhichIntersectRectangle(self, rectangle):
+    def get_any_edge_which_intersects(self, bounding_box: BoundingBox) -> Optional[Edge]:
         for edge in self.edges:
-            if edge.intersects(rectangle):
+            if edge.bounding_box.intersects(bounding_box):
                 return edge
         return None
 
@@ -17,6 +32,7 @@ class ObstacleDetectorResult:
         edges_string_representation = ""
         for edge in self.edges:
             edges_string_representation += str(edge)
-        return "ObstacleDetectorResult: [contactTop='%s', distanceTop='%s', contactBottom='%s', distanceBottom='%s', " \
-               "edges='%s']" % (self.contactTop, self.distanceTop, self.contactBottom, self.distanceBottom,
-                                edges_string_representation)
+        return "ObstacleDetectorResult: [contact_top='%s', distance_top='%s', contact_bottom='%s', " \
+               "distance_bottom='%s', edges_string_representation='%s']" % \
+               (self.contact_top, self.distance_top, self.contact_bottom, self.distance_bottom,
+                edges_string_representation)

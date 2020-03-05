@@ -30,16 +30,14 @@ class SteeringCommandGenerator(Node):
                                        transitions=self.__transitions,
                                        initial='start')
 
-
-
     # Node method implementations
-    def __startUp(self):
-        self.object_detector_receiver = Receiver("OBJECT_DETECTOR")
-        self.uart_output_sender = Sender(self.__node_config_section)
+    def __start_up(self):
+        self.__object_detector_receiver = Receiver("OBJECT_DETECTOR")
+        self.__uart_output_sender = Sender(self.__node_config_section)
 
     def __progress(self):
-        object_detector_result = self.object_detector_receiver.receive()
+        object_detector_result = self.__object_detector_receiver.receive()
 
-    def __shutDown(self):
-        self.object_detector_receiver.close()
-        self.uart_output_sender.close()
+    def __shut_down(self):
+        self.__object_detector_receiver.close()
+        self.__uart_output_sender.close()

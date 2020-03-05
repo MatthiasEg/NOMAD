@@ -1,19 +1,22 @@
 import configparser
 import logging
+from object_detection.object_detector.object_detector_result import Distance
+
 
 class PylonDistanceEstimator:
-    logger = logging.getLogger("PylonDistanceEstimator")
+    __logger = logging.getLogger("PylonDistanceEstimator")
 
     def __init__(self):
-        self._loadConfiguration()
+        self.__load_configuration()
 
-    def _loadConfiguration(self):
-        config = configparser.ConfigParser()                                     
+    def __load_configuration(self):
+        config = configparser.ConfigParser()
         config.read('config.ini')
-        self.realWidth = config.get('PYLON_DETECTOR', 'PYLON_REAL_WIDTH')
-        self.realHeight = config.get('PYLON_DETECTOR', 'PYLON_REAL_HEIGHT')
+        self.__real_width = config.get('PYLON_DISTANCE_ESTIMATOR', 'PYLON_REAL_WIDTH')
+        self.__real_height = config.get('PYLON_DISTANCE_ESTIMATOR', 'PYLON_REAL_HEIGHT')
 
-    def estimate(self, width, height):
-        estimatedDistance = 10
-        self.logger.debug("estimated distance: '%s' (by width='%s', height='%s')" % (estimatedDistance, width, height))
-        return estimatedDistance
+    def estimate(self, width, height) -> Distance:
+        estimated_distance = Distance(10, False)
+        self.__logger.debug(
+            "estimated distance: '%s' (by width='%s', height='%s')" % (estimated_distance, width, height))
+        return estimated_distance
