@@ -1,10 +1,11 @@
-<<<<<<< Updated upstream
 from multiprocessing import Process
 from object_detection.pylon_detector.pylon_detector import PylonDetector
 from object_detection.object_detector.object_detector import ObjectDetector
 from object_detection.obstacle_detector.obstacle_detector import ObstacleDetector
 import logging
 import sys
+from statemachine.statemachine import StateMachine
+from statemachine.states.start import Start
 
 #Config Logging
 logging.basicConfig(
@@ -38,14 +39,12 @@ def main():
     objectDetectionProcess = Process(target=startObjectDetection, args=())
     objectDetectionProcess.start()
 
-if __name__ == '__main__':
-    main()
-=======
-from statemachine.statemachine import StateMachine
-from statemachine.states.start import Start
 
-if __name__ == "__main__":
+def __start_state_machine():
     state_machine = StateMachine(Start())
     state_machine.request1()
     state_machine.request2()
->>>>>>> Stashed changes
+
+if __name__ == '__main__':
+    main()
+    __start_state_machine()
