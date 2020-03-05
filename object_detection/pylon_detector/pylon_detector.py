@@ -13,10 +13,10 @@ class PylonDetector(Node):
     super().__init__(self.nodeConfigSection)
     self.pylonDistanceEstimator = PylonDistanceEstimator()
 
-  def _startUp(self):
+  def __startUp(self):
     self.pylonDetectorSender = Sender(self.nodeConfigSection)
   
-  def _progress(self):
+  def __progress(self):
     pylonOne = self.createPylon()
     pylonTwo = self.createPylon()
     self.pylonDetectorSender.send(PylonDetectorResult([pylonOne,pylonTwo]))
@@ -26,5 +26,5 @@ class PylonDetector(Node):
     rectangleCenterPoint = Point(12, 40)
     return Pylon(rectangleCenterPoint, 100, 50, estimatedDistance, True)
 
-  def _shutDown(self):
+  def __shutDown(self):
     self.pylonDetectorSender.close()

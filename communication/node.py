@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 class Node(ABC):
 
     def __init__(self, node_config_section: str):
-        self.node_config_section = node_config_section
+        self.__node_config_section = node_config_section
         self._loadConfiguration(node_config_section)
 
     def _loadConfiguration(self, node_config_section):
@@ -18,26 +18,26 @@ class Node(ABC):
 
     def start(self):
         self.logger.info("starting ...")
-        self._startUp()
+        self.__startUp()
         try:
             while True:
-                self._progress()
+                self.__progress()
                 time.sleep(self.sleepTimeMS)
         finally:
             self.logger.info("stopping ...")
-            self._shutDown()
+            self.__shutDown()
 
     # sender and receiver connections are built
     @abstractmethod
-    def _startUp(self):
+    def __startUp(self):
         pass
 
     # node specific logic
     @abstractmethod
-    def _progress(self):
+    def __progress(self):
         pass
 
     # sender and receiver connections are closed
     @abstractmethod
-    def _shutDown(self):
+    def __shutDown(self):
         pass

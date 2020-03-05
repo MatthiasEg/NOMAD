@@ -20,7 +20,7 @@ class ObjectDetector(Node):
         self.situationAnalyzer = SituationAnalyzer()
         self.ultraSonicRange = self.__load_ultra_sonic_range()
 
-    def __load_ultra_sonic_range(self):
+    def __load_ultra_sonic_range():
         config = configparser.ConfigParser()
         config.read('config.ini')
         bottom_left = Point(config.getint('ULTRASONIC_RECTANGLE_RANGE', 'BUTTOM_LEFT_X'),
@@ -29,18 +29,18 @@ class ObjectDetector(Node):
                           config.getint('ULTRASONIC_RECTANGLE_RANGE', 'TOP_RIGHT_Y'))
         return Rectangle(bottom_left, top_right)
 
-    def _startUp(self):
+    def __startUp(self):
         self.pylonDetectorReceiver = Receiver("PYLON_DETECTOR")
         self.obstacleDetectorReceiver = Receiver("OBSTACLE_DETECTOR")
         self.objectDetectorSender = Sender(self.node_config_section)
 
-    def _progress(self):
+    def __progress(self):
         pylon_detector_result = self.pylonDetectorReceiver.receive()
         obstacle_detector_result = self.obstacleDetectorReceiver.receive()
         centred_pylon = pylon_detector_result.getPylonWhichIntersectRectangle(self.ultraSonicRange)
         self.situationAnalyzer.analyze(centred_pylon, obstacle_detector_result)
 
-    def _shutDown(self):
+    def __shutDown(self):
         self.pylonDetectorReceiver.close()
         self.obstacleDetectorReceiver.close()
         self.objectDetectorSender.close()

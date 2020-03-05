@@ -11,14 +11,14 @@ class ObstacleDetector(Node):
     def __init__(self):
         super().__init__(self.nodeConfigSection)
 
-    def _startUp(self):
+    def __startUp(self):
         self.obstacleDetectorSender = Sender(self.nodeConfigSection)
 
-    def _progress(self):
+    def __progress(self):
         edge_one = Line(Point(30, 20), Point(200, 40))
         edge_two = Line(Point(32, 19), Point(195, 41))
         obstacle_detector_result = ObstacleDetectorResult(True, 230, False, 400, (edge_one, edge_two))
         self.obstacleDetectorSender.send(obstacle_detector_result)
 
-    def _shutDown(self):
+    def __shutDown(self):
         self.obstacleDetectorSender.close()
