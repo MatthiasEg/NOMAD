@@ -1,5 +1,4 @@
 import configparser
-import string
 import time
 import logging
 from abc import ABC, abstractmethod
@@ -7,7 +6,7 @@ from abc import ABC, abstractmethod
 
 class Node(ABC):
 
-    def __init__(self, node_config_section: string):
+    def __init__(self, node_config_section: str):
         self.node_config_section = node_config_section
         self._loadConfiguration(node_config_section)
 

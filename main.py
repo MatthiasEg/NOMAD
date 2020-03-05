@@ -4,40 +4,44 @@ from object_detection.object_detector.object_detector import ObjectDetector
 from object_detection.obstacle_detector.obstacle_detector import ObstacleDetector
 import logging
 import sys
-from statemachine.statemachine import StateMachine
+from statemachine.steering_command_generator import StateMachine
 from statemachine.states.start import Start
 
-#Config Logging
+# Config Logging
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - [%(threadName)s] - %(message)s',     
+    format='%(asctime)s - %(name)s - [%(threadName)s] - %(message)s',
     handlers=[logging.StreamHandler()],
     level=logging.DEBUG
 )
 
+
 def startObstacleDetection():
-    obstacleDetector = ObstacleDetector()
-    obstacleDetector.start()
+    obstacle_detector = ObstacleDetector()
+    obstacle_detector.start()
+
 
 def startObjectDetection():
-    objectDetector = ObjectDetector()
-    objectDetector.start()
+    object_detector = ObjectDetector()
+    object_detector.start()
+
 
 def startPylonDetection():
-    pylonDetector = PylonDetector()
-    pylonDetector.start()
+    pylon_detector = PylonDetector()
+    pylon_detector.start()
+
 
 def main():
     logger = logging.getLogger("STARTUP")
     logger.info("starting server...")
 
-    obstacleDetectorProcess = Process(target=startObstacleDetection, args=())
-    obstacleDetectorProcess.start()
+    obstacle_detector_process = Process(target=startObstacleDetection, args=())
+    obstacle_detector_process.start()
 
-    pylonDetectorProcess = Process(target=startPylonDetection, args=())
-    pylonDetectorProcess.start()
-    
-    objectDetectionProcess = Process(target=startObjectDetection, args=())
-    objectDetectionProcess.start()
+    pylon_detector_process = Process(target=startPylonDetection, args=())
+    pylon_detector_process.start()
+
+    object_detection_process = Process(target=startObjectDetection, args=())
+    object_detection_process.start()
 
 
 def __start_state_machine():
@@ -45,6 +49,7 @@ def __start_state_machine():
     state_machine.request1()
     state_machine.request2()
 
+
 if __name__ == '__main__':
-    main()
+    # main()
     __start_state_machine()
