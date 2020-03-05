@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 from multiprocessing import Process
 from object_detection.pylon_detector.pylon_detector import PylonDetector
 from object_detection.object_detector.object_detector import ObjectDetector
@@ -39,3 +40,12 @@ def main():
 
 if __name__ == '__main__':
     main()
+=======
+from statemachine.statemachine import StateMachine
+from statemachine.states.start import Start
+
+if __name__ == "__main__":
+    state_machine = StateMachine(Start())
+    state_machine.request1()
+    state_machine.request2()
+>>>>>>> Stashed changes
