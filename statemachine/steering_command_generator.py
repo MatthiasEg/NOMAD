@@ -1,11 +1,15 @@
 from communication.node import Node
 from transitions import Machine, State
 
+from communication.receiver import Receiver
+from communication.sender import Sender
+
 
 class SteeringCommandGenerator(Node):
+    __node_config_section = "STEERING_COMMAND_GENERATOR"
 
-    def __init__(self, node_config_section: str):
-        super().__init__("STEERING_COMMAND_GENERATOR")
+    def __init__(self):
+        super().__init__(self.__node_config_section)
         self.__states = [
             State(name='destination_pylon_unknown', on_exit=['exit_destination_pylon_unknown']),
             State(name='pylon_targeted', on_exit=['exit_start']),
@@ -14,11 +18,11 @@ class SteeringCommandGenerator(Node):
         ]
 
         self.__transitions = [
-            {'trigger': '', 'source': 'destination_pylon_unknown', 'dest': 'pylon_targeted'},
-            {'trigger': '', 'source': 'pylon_targeted', 'dest': 'orbit_targeted'},
-            {'trigger': '', 'source': 'orbit_targeted', 'dest': 'orbit_entered'},
-            {'trigger': '', 'source': 'orbit_entered', 'dest': 'destination_pylon_unknown'},
-            {'trigger': '', 'source': 'orbit_targeted', 'dest': 'destination_pylon_unknown'},
+            {'trigger': 'methoddummy1', 'source': 'destination_pylon_unknown', 'dest': 'pylon_targeted'},
+            {'trigger': 'methoddummy2', 'source': 'pylon_targeted', 'dest': 'orbit_targeted'},
+            {'trigger': 'methoddummy3', 'source': 'orbit_targeted', 'dest': 'orbit_entered'},
+            {'trigger': 'methoddummy4', 'source': 'orbit_entered', 'dest': 'destination_pylon_unknown'},
+            {'trigger': 'methoddummy5', 'source': 'orbit_targeted', 'dest': 'destination_pylon_unknown'},
         ]
 
         self.__state_machine = Machine(model=self,
@@ -26,11 +30,16 @@ class SteeringCommandGenerator(Node):
                                        transitions=self.__transitions,
                                        initial='start')
 
-    def _startUp(self):
-        pass
 
-    def _progress(self):
-        pass
 
-    def _shutDown(self):
-        pass
+    # Node method implementations
+    def __startUp(self):
+        self.object_detector_receiver = Receiver("OBJECT_DETECTOR")
+        self.uart_output_sender = Sender(self.__node_config_section)
+
+    def __progress(self):
+        object_detector_result = self.object_detector_receiver.receive()
+
+    def __shutDown(self):
+        self.object_detector_receiver.close()
+        self.uart_output_sender.close()
