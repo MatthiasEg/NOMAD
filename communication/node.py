@@ -1,23 +1,26 @@
 import configparser
+import string
 import time
 import logging
+from abc import ABC, abstractmethod
 
-class Node:
-    
-    def __init__(self, nodeConfigSection):
-        self.nodeConfigSection = nodeConfigSection
-        self._loadConfiguration(nodeConfigSection)
 
-    def _loadConfiguration(self, nodeConfigSection):
-        config = configparser.ConfigParser()                                     
+class Node(ABC):
+
+    def __init__(self, node_config_section: string):
+        self.node_config_section = node_config_section
+        self._loadConfiguration(node_config_section)
+
+    def _loadConfiguration(self, node_config_section):
+        config = configparser.ConfigParser()
         config.read('config.ini')
-        self.sleepTimeMS = config.getfloat(nodeConfigSection, 'SLEEP_TIME_MS')/1000 #convert miliseconds to seconds
-        self.logger = logging.getLogger(nodeConfigSection)
+        self.sleepTimeMS = config.getfloat(node_config_section, 'SLEEP_TIME_MS') / 1000  # convert miliseconds to seconds
+        self.logger = logging.getLogger(node_config_section)
 
     def start(self):
         self.logger.info("starting ...")
         self._startUp()
-        try: 
+        try:
             while True:
                 self._progress()
                 time.sleep(self.sleepTimeMS)
@@ -26,10 +29,16 @@ class Node:
             self._shutDown()
 
     # sender and receiver connections are built
-    def _startUp(self): pass
+    @abstractmethod
+    def _startUp(self):
+        pass
 
     # node specific logic
-    def _progress(self): pass
+    @abstractmethod
+    def _progress(self):
+        pass
 
     # sender and receiver connections are closed
-    def _shutDown(self): pass
+    @abstractmethod
+    def _shutDown(self):
+        pass
