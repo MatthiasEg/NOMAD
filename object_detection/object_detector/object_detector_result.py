@@ -54,7 +54,7 @@ class DetectedObject:
 
 class ObjectDetectorResult:
     def __init__(self, detected_objects):
-        self.timestamp = datetime.timestamp()
+        self.timestamp = datetime.timestamp(datetime.now())
         self.detected_objects = detected_objects
 
     def __str__(self):
