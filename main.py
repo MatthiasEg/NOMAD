@@ -6,6 +6,8 @@ import logging
 import sys
 
 # Config Logging
+from statemachine.steering_command_generator import SteeringCommandGenerator
+
 logging.basicConfig(
     format='%(asctime)s - %(name)s - [%(threadName)s] - %(message)s',
     handlers=[logging.StreamHandler()],
@@ -28,6 +30,11 @@ def startPylonDetection():
     pylon_detector.start()
 
 
+def startSteeringCommandGenerator():
+    steering_command_generator = SteeringCommandGenerator()
+    steering_command_generator.start()
+
+
 def main():
     logger = logging.getLogger("STARTUP")
     logger.info("starting server...")
@@ -41,11 +48,9 @@ def main():
     object_detection_process = Process(target=startObjectDetection, args=())
     object_detection_process.start()
 
-
-def __start_state_machine():
-    pass
+    steering_command_generator_process = Process(target=startSteeringCommandGenerator, args=())
+    steering_command_generator_process.start()
 
 
 if __name__ == '__main__':
     main()
-    __start_state_machine()
