@@ -6,6 +6,11 @@ import logging
 
 from communication.receiver import Receiver
 from communication.sender import Sender
+from object_detection.object_detector.object_detector_result import ObjectDetectorResult
+from statemachine.danger_zone import DangerZone
+from statemachine.states import States
+from statemachine.steering_command_generator_result import SteeringCommandGeneratorResult
+from statemachine.transitions_nomad import TransitionsNomad
 
 
 class SteeringCommandGenerator(Node):
@@ -15,46 +20,123 @@ class SteeringCommandGenerator(Node):
     def __init__(self):
         super().__init__(self.__node_config_name)
 
+        self.current_state = None
         self.__states = [
-            State(name='Start'),
-            State(name='DestinationPylonUnknown', on_enter=['process_object_detector_data']),
-            State(name='PylonTargeted'),
-            State(name='OrbitTargeted'),
-            State(name='OrbitEntered'),
+            State(name=States.Start.name, on_exit=['drive_fictitious_pylon_orbit']),
+            State(name=States.DestinationPylonUnknown.name),
+            State(name=States.PylonTargeted.name),
+            State(name=States.TransitEndangered.name),
+            State(name=States.ObstacleDetected.name),
+            State(name=States.OrbitTargeted.name),
+            State(name=States.OrbitEntered.name),
         ]
 
-        self.__transitions = [
-            {'trigger': 'start_state_machine', 'source': 'Start', 'dest': 'DestinationPylonUnknown',
-             'conditions': 'is_object_detection_data_available'},
-            {'trigger': 'pylon_detected', 'source': 'DestinationPylonUnknown', 'dest': 'PylonTargeted'},
-            {'trigger': 'calculate_pylon_number_and_distances', 'source': 'PylonTargeted', 'dest': 'OrbitTargeted'},
-            {'trigger': 'methoddummy3', 'source': 'OrbitTargeted', 'dest': 'OrbitEntered'},
-            # inverse transitions
-            {'trigger': 'methoddummy4', 'source': 'OrbitEntered', 'dest': 'DestinationPylonUnknown'},
-            {'trigger': 'methoddummy5', 'source': 'OrbitTargeted', 'dest': 'DestinationPylonUnknown'},
-        ]
+        self.__state_machine = Machine(
+            model=self,
+            states=self.__states,
+            transitions=TransitionsNomad.transitions,
+            initial=States.Start,
+            auto_transitions=False,
+            model_attribute='current_state',
+            queued=True
+        )
+        self.__current_steering_result = SteeringCommandGeneratorResult()
 
-        self.__state_machine = Machine(model=self,
-                                       states=self.__states,
-                                       transitions=self.__transitions,
-                                       initial='Start')
-        self.__state_machine.set_state('Start')
+    def drive_orbit(self):
+        """
+        State: OrbitEntered
+        :return:
+        """
+        # drive orbit with radius of 1 meter or 0.5 meter depending of measured distance
+        # scan for pylon while driving, if one is detected keep driving until it is centered
+        # then drive towards pylon
+        self.trigger('OrbitEntered_to_PylonTargeted')
+        # if obstacle is detected in front of nomad, goto state obstacle detected
+        self.trigger('OrbitEntered_to_ObstacleDetected')
+        # if in next frames pylon to the right side is detected drive fi
+        self.drive_fictitious_pylon_orbit()
+        self.trigger('OrbitEntered_to_DestinationPylonUnknown')
+        pass
+
+    def drive_towards_targeted_pylon(self):
+        """
+        State: OrbitTargeted, TransitEndangered
+        :return:
+        """
+        # if in state
+        self.__logger.debug("DRIVING....")
+        if self.__state_machine.get_model_state(self) == 'OrbitTargeted':
+            # drive towards pylon and measure distance
+            # watch out for pylons on right side of targeted pylon
+
+            pass
+        elif self.__state_machine.get_model_state(self) == 'TransitEndangered':
+            # drive towards pylon
+            # measure distance to horizontal axis of pylon in danger zone
+            # if obstacle in front of nomad detected and distance < 0.5m
+            self.trigger('TransitEndangered_to_ObstacleDetected')
+
+            # if distance to horizontal axis of pylon in danger zone <=1m do drive_fictitious_pylon_orbit
+            if False:
+                self.drive_fictitious_pylon_orbit()
+                self.trigger("TransitEndangered_to_DestinationPylonUnknown")
+            pass
+
+    def is_pylon_in_danger_zone(self):
+        """
+        State: PylonTargeted
+        :return:
+        """
+        # if in danger zone switch to
+        self.__logger.debug("Is Pylon in danger zone?")
+        danger_zone = DangerZone()
+        if danger_zone.is_relevant():
+            self.trigger('PylonTargeted_to_TransitEndangered')
+        else:
+            self.trigger('PylonTargeted_to_OrbitTargeted')
+
+    def measure_distance_to_pylon(self):
+        """
+        State:
+        :return:
+        """
+        # measure distance to pylon
+        #
+        pass
+
+    def scan_for_pylons(self):
+        """
+        State: DestinationPylonUnknown
+        :return:
+        """
+        # process data and initiate transitions to next state if pylon is detected and in center.
+        # if nothing is found, keep scanning while driving
+        # if pylon is still to much on left side, keep driving on circle until pylon perfectly in front
+
+        # if pylon is centered
+        self.trigger('DestinationPylonUnknown_to_PylonTargeted')
+
+    def drive_fictitious_pylon_orbit(self):
+        """
+        State: on_exit Start
+        :return:
+        """
+        self.__logger.debug("Driving fictitious pylon orbit")
+        # do driving stuff
 
     def is_object_detection_data_available(self):
         return self.object_detector_result is not None
 
     def start_state_machine(self):
-        self.__logger.debug("start state triggered")
-        pass
+        """
+        State: Start
+        :return:
+        """
+        self.__logger.debug("Starting State Machine...")
+        self.trigger('Start_to_DestinationPylonUnknown')
 
     def process_object_detector_data(self):
         pass
-
-    def get_states(self) -> List[State]:
-        return self.__states
-
-    def get_transitions(self) -> List[Dict[str, str]]:
-        return self.__transitions
 
     # Node method implementations
     def _start_up(self):
@@ -64,14 +146,20 @@ class SteeringCommandGenerator(Node):
     def _progress(self):
         # self.object_detector_result = self.__object_detector_receiver.receive()
 
-        self.object_detector_result = "[contact_top='True', distance_top='230', contact_bottom='False', distance_bottom='400', edges_string_representation='LINESTRING (30 20, 200 40)LINESTRING (32 19, 195 41)']"
+        # test data
+        self.object_detector_result = ObjectDetectorResult("[data]")
 
-        self.__logger.info(f"STATE: {self.__state_machine.get_model_state(self).name}")
-        self.start_state_machine()
-        self.trigger('start_state_machine')
-        self.__logger.info(f"STATE: {self.__state_machine.get_model_state(self).name}")
-        self.trigger('pylon_detected')
-        self.__logger.info(f"STATE: {self.__state_machine.get_model_state(self).name}")
+        current_state_name = self.current_state
+        trigger_for_next_state = self.__state_machine.get_triggers(current_state_name)
+        internal_trigger_for_current_state = [trigger for trigger in trigger_for_next_state if "internal_" in trigger]
+        self.trigger(internal_trigger_for_current_state[0])
+
+        # fetch data
+        # forward to state
+        # analyze data + try to make transition
+        # if this fails repeat with next incoming data
+
+        # https://github.com/pytransitions/transitions#automatic-transitions-for-all-states
 
     def _shut_down(self):
         self.__object_detector_receiver.close()
