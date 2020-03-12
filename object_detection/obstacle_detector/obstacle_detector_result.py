@@ -16,23 +16,23 @@ class ObstacleDetectorResult:
 
     def __init__(self, contact_top: bool, distance_top: float, contact_bottom: bool, distance_bottom: float,
                  edges: List[Edge]):
-        self.contact_top = contact_top
-        self.distance_top = distance_top
-        self.contact_bottom = contact_bottom
-        self.distance_bottom = distance_bottom
-        self.edges = edges
+        self._contact_top = contact_top
+        self._distance_top = distance_top
+        self._contact_bottom = contact_bottom
+        self._distance_bottom = distance_bottom
+        self._edges = edges
 
     def get_any_edge_which_intersects(self, bounding_box: BoundingBox) -> Optional[Edge]:
-        for edge in self.edges:
+        for edge in self._edges:
             if edge.bounding_box.intersects(bounding_box):
                 return edge
         return None
 
     def __str__(self):
         edges_string_representation = ""
-        for edge in self.edges:
+        for edge in self._edges:
             edges_string_representation += str(edge)
         return "ObstacleDetectorResult: [contact_top='%s', distance_top='%s', contact_bottom='%s', " \
                "distance_bottom='%s', edges_string_representation='%s']" % \
-               (self.contact_top, self.distance_top, self.contact_bottom, self.distance_bottom,
+               (self._contact_top, self._distance_top, self._contact_bottom, self._distance_bottom,
                 edges_string_representation)

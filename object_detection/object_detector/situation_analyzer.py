@@ -16,7 +16,7 @@ class Situation(Enum):
 
 
 class SituationAnalyzer:
-    __logger = logging.getLogger("SituationAnalyzer")
+    _logger = logging.getLogger("SituationAnalyzer")
 
     def analyze(self, centred_pylon: Pylon, obstacle_detector_result: ObstacleDetectorResult) -> Situation:
         if centred_pylon is not None:
@@ -26,30 +26,30 @@ class SituationAnalyzer:
 
     def analyze_with_centred_pylon(self, centred_pylon: Pylon, obstacle_detector_result: ObstacleDetectorResult) \
             -> Situation:
-        if obstacle_detector_result.contact_bottom:
-            if obstacle_detector_result.distance_top == obstacle_detector_result.distance_bottom:
-                intersecting_edge = obstacle_detector_result.get_any_edge_which_intersects(centred_pylon.bounding_box)
+        if obstacle_detector_result._contact_bottom:
+            if obstacle_detector_result._distance_top == obstacle_detector_result._distance_bottom:
+                intersecting_edge = obstacle_detector_result.get_any_edge_which_intersects(centred_pylon._bounding_box)
                 if intersecting_edge is not None:
-                    self.__logger.debug("Square timber behind pylon")
+                    self._logger.debug("Square timber behind pylon")
                     return Situation.square_timber_behind_pylon
                 else:
-                    self.__logger.debug("Only pylon in front of the vehicle")
+                    self._logger.debug("Only pylon in front of the vehicle")
                     return Situation.only_pylon_in_front
             else:
-                self.__logger.debug("Square timber in front of pylon")
+                self._logger.debug("Square timber in front of pylon")
                 return Situation.square_timber_in_front_of_pylon
         else:
-            self.__logger.debug("Only pylon more then 4 meters away")
+            self._logger.debug("Only pylon more then 4 meters away")
             return Situation.pylon_far_away
 
     def analyze_without_centred_pylon(self, obstacle_detector_result: ObstacleDetectorResult) -> Situation:
-        if obstacle_detector_result.contact_bottom:
-            if obstacle_detector_result.distance_top == obstacle_detector_result.distance_bottom:
-                self.__logger.debug("Unknown Situation")
+        if obstacle_detector_result._contact_bottom:
+            if obstacle_detector_result._distance_top == obstacle_detector_result._distance_bottom:
+                self._logger.debug("Unknown Situation")
                 return Situation.ignore  # roadside use cases currently not implemented
             else:
-                self.__logger.debug("Only square timber in front")
+                self._logger.debug("Only square timber in front")
                 return Situation.only_square_timber_in_front
         else:
-            self.__logger.debug("There is no object in front of vehicle")
+            self._logger.debug("There is no object in front of vehicle")
             return Situation.no_object_in_front

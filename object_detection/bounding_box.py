@@ -8,10 +8,10 @@ from shapely.geometry import box
 class BoundingBox:
 
     def __init__(self, shape: BaseGeometry):
-        self.shape = shape
+        self._shape = shape
 
     def intersects(self, other: BoundingBox) -> bool:
-        return self.shape.intersects(other.shape)
+        return self._shape.intersects(other._shape)
 
     @staticmethod
     def of_rectangle(min_x: int, min_y: int, max_x: int, max_y: int) -> BoundingBox:
@@ -30,4 +30,4 @@ class BoundingBox:
         return BoundingBox(LineString([start, end]))
 
     def __str__(self):
-        return str(self.shape)
+        return str(self._shape)

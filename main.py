@@ -39,17 +39,19 @@ def main():
     logger = logging.getLogger("STARTUP")
     logger.info("starting server...")
 
-    obstacle_detector_process = Process(target=startObstacleDetection, args=())
-    obstacle_detector_process.start()
+    # obstacle_detector_process = Process(target=startObstacleDetection, args=())
+    # obstacle_detector_process.start()
+    #
+    # pylon_detector_process = Process(target=startPylonDetection, args=())
+    # pylon_detector_process.start()
+    #
+    # object_detection_process = Process(target=startObjectDetection, args=())
+    # object_detection_process.start()
 
-    pylon_detector_process = Process(target=startPylonDetection, args=())
-    pylon_detector_process.start()
+    # steering_command_generator_process = Process(target=startSteeringCommandGenerator, args=())
+    # steering_command_generator_process.start()
 
-    object_detection_process = Process(target=startObjectDetection, args=())
-    object_detection_process.start()
-
-    steering_command_generator_process = Process(target=startSteeringCommandGenerator, args=())
-    steering_command_generator_process.start()
+    startSteeringCommandGenerator()
 
 
 if __name__ == '__main__':

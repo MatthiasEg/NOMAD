@@ -12,12 +12,12 @@ class DetectedObjectType(Enum):
 
 class Distance:
     def __init__(self, value: float, measured: bool):
-        self.value = value
+        self._value = value
         # true means measured by distance sensors, false means estimated by camera
-        self.measured = measured
+        self._measured = measured
 
     def __str__(self):
-        return "Distance: [value='%s', measured='%s']" % (self.value, self.measured)
+        return "Distance: [value='%s', measured='%s']" % (self._value, self._measured)
 
 
 class RelativeObjectType(Enum):
@@ -42,28 +42,28 @@ class DetectedObject:
     """
     def __init__(self, object_type: DetectedObjectType, bounding_box: BoundingBox, distance: Distance,
                  relative_objects: List[RelativeObject]):
-        self.object_type = object_type
-        self.bounding_box = bounding_box
-        self.distance = distance  # nullable
-        self.relative_objects = relative_objects
+        self._object_type = object_type
+        self._bounding_box = bounding_box
+        self._distance = distance  # nullable
+        self._relative_objects = relative_objects
 
     def __str__(self):
         relative_objects_string_representation = ""
-        for relative_object in self.relative_objects:
+        for relative_object in self._relative_objects:
             relative_objects_string_representation += str(relative_object)
         return "DetectedObject: [type='%s', boundingBox='%s', distance='%s', " \
                "relative_objects_string_representation='%s']" % \
-               (self.object_type, self.bounding_box, self.distance, relative_objects_string_representation)
+               (self._object_type, self._bounding_box, self._distance, relative_objects_string_representation)
 
 
 class ObjectDetectorResult:
     def __init__(self, detected_objects: List[DetectedObject]):
-        self.timestamp = datetime.timestamp(datetime.now())
-        self.detected_objects = detected_objects
+        self._timestamp = datetime.timestamp(datetime.now())
+        self._detected_objects = detected_objects
 
     def __str__(self):
         detected_objects_string_representation = ""
-        for detected_object in self.detected_objects:
+        for detected_object in self._detected_objects:
             detected_objects_string_representation += str(detected_object)
         return "ObjectDetectorResult: [timestamp='%s', detected_objects_string_representation='%s']" % (
-            self.timestamp, detected_objects_string_representation)
+            self._timestamp, detected_objects_string_representation)

@@ -1,6 +1,7 @@
 from enum import Enum
+from typing import List
 
-from statemachine.states import States
+from statemachine.states_nomad import States
 
 
 class Transitions(Enum):
@@ -28,7 +29,7 @@ class Transitions(Enum):
 
 
 class TransitionsNomad:
-    transitions = [
+    _transitions = [
         {
             'trigger': Transitions.Start_to_DestinationPylonUnknown.name,
             'source': States.Start.name,
@@ -134,3 +135,7 @@ class TransitionsNomad:
             'after': 'drive_orbit'
         }
     ]
+
+    @property
+    def transitions(self):
+        return self._transitions
