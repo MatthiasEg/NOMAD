@@ -13,6 +13,7 @@ class DetectedObjectType(Enum):
 class Distance:
     def __init__(self, value: float, measured: bool):
         self.value = value
+        # true means measured by distance sensors, false means estimated by camera
         self.measured = measured
 
     def __str__(self):
@@ -36,6 +37,9 @@ class RelativeObject:
 
 
 class DetectedObject:
+    """
+    Obstacles or Pylon
+    """
     def __init__(self, object_type: DetectedObjectType, bounding_box: BoundingBox, distance: Distance,
                  relative_objects: List[RelativeObject]):
         self.object_type = object_type
@@ -53,7 +57,7 @@ class DetectedObject:
 
 
 class ObjectDetectorResult:
-    def __init__(self, detected_objects):
+    def __init__(self, detected_objects: List[DetectedObject]):
         self.timestamp = datetime.timestamp(datetime.now())
         self.detected_objects = detected_objects
 
