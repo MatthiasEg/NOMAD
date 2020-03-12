@@ -164,3 +164,22 @@ class SteeringCommandGenerator(Node):
     def _shut_down(self):
         self.__object_detector_receiver.close()
         self.__uart_output_sender.close()
+
+    @staticmethod
+    def _create_fake_data() -> ObjectDetectorResult:
+        estimated_pylon = DetectedObject(
+            object_type=DetectedObjectType.pylon,
+            bounding_box=BoundingBox.of_rectangle_by_center(center=Point(12, 40), width=100, height=500),
+            distance=Distance(12.5, False),
+            relative_objects=List[None]
+        )
+        measured_pylon = DetectedObject(
+            object_type=DetectedObjectType.pylon,
+            bounding_box=BoundingBox.of_rectangle_by_center(center=Point(1920/2, 1080/2), width=100, height=500),
+            distance=Distance(value=12.5, measured=True),
+            relative_objects=List[None]
+        )
+        detected_objects = [estimated_pylon, measured_pylon]
+        object_detector_result = ObjectDetectorResult(detected_objects)
+
+        return object_detector_result
