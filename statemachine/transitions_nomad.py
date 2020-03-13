@@ -18,6 +18,8 @@ class Transitions(Enum):
     OrbitEntered_to_DestinationPylonUnknown = 11
     OrbitEntered_to_ObstacleDetected = 12
     OrbitEntered_to_PylonTargeted = 13
+    ObstacleDetected_to_DestinationPylonUnknown = 14
+    ObstacleDetected_to_OrbitEntered = 15
 
     # internals
     internal_Start = 14
@@ -26,6 +28,7 @@ class Transitions(Enum):
     internal_TransitEndangered = 17
     internal_OrbitTargeted = 18
     internal_OrbitEntered = 19
+    internal_ObstacleDetected = 20
 
 
 class TransitionsNomad:
@@ -33,8 +36,7 @@ class TransitionsNomad:
         {
             'trigger': Transitions.Start_to_DestinationPylonUnknown.name,
             'source': States.Start.name,
-            'dest': States.DestinationPylonUnknown.name,
-            'conditions': 'is_object_detection_data_available'
+            'dest': States.DestinationPylonUnknown.name
         },
         {
             'trigger': Transitions.DestinationPylonUnknown_to_PylonTargeted.name,
@@ -57,14 +59,14 @@ class TransitionsNomad:
             'dest': States.TransitEndangered.name
         },
         {
-            'trigger': Transitions.TransitEndangered_to_ObstacleDetected.name,
-            'source': States.TransitEndangered.name,
-            'dest': States.ObstacleDetected.name
-        },
-        {
             'trigger': Transitions.TransitEndangered_to_DestinationPylonUnknown.name,
             'source': States.TransitEndangered.name,
             'dest': States.DestinationPylonUnknown.name
+        },
+        {
+            'trigger': Transitions.TransitEndangered_to_ObstacleDetected.name,
+            'source': States.TransitEndangered.name,
+            'dest': States.ObstacleDetected.name
         },
         {
             'trigger': Transitions.OrbitTargeted_to_OrbitEntered.name,
@@ -96,6 +98,23 @@ class TransitionsNomad:
             'source': States.OrbitEntered.name,
             'dest': States.PylonTargeted.name
         },
+        {
+            'trigger': Transitions.OrbitEntered_to_PylonTargeted.name,
+            'source': States.OrbitEntered.name,
+            'dest': States.PylonTargeted.name
+        },
+        {
+            'trigger': Transitions.ObstacleDetected_to_DestinationPylonUnknown.name,
+            'source': States.ObstacleDetected.name,
+            'dest': States.DestinationPylonUnknown.name
+        },
+        {
+            'trigger': Transitions.ObstacleDetected_to_OrbitEntered.name,
+            'source': States.ObstacleDetected.name,
+            'dest': States.OrbitEntered.name
+        },
+
+
         # internal transitions (no real transition happening)
         # NOTE: trigger have prefix 'internal_'
         {
@@ -133,6 +152,13 @@ class TransitionsNomad:
             'source': States.OrbitEntered.name,
             'dest': None,
             'after': 'drive_orbit'
+        },
+        {
+            'trigger': Transitions.internal_ObstacleDetected.name,
+            'source': States.ObstacleDetected.name,
+            'dest': None,
+            'before': 'slow_down',
+            'after': 'align_horizontal_to_obstacle'
         }
     ]
 
