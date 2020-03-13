@@ -21,14 +21,14 @@ class Transitions(Enum):
     ObstacleDetected_to_DestinationPylonUnknown = 14
     ObstacleDetected_to_OrbitEntered = 15
 
-    # internals
-    internal_Start = 14
-    internal_DestinationPylonUnknown = 15
-    internal_PylonTargeted = 16
-    internal_TransitEndangered = 17
-    internal_OrbitTargeted = 18
-    internal_OrbitEntered = 19
-    internal_ObstacleDetected = 20
+    # internals starting value 50 upwards
+    internal_Start = 50
+    internal_DestinationPylonUnknown = 51
+    internal_PylonTargeted = 52
+    internal_TransitEndangered = 53
+    internal_OrbitTargeted = 54
+    internal_OrbitEntered = 55
+    internal_ObstacleDetected = 56
 
 
 class TransitionsNomad:
