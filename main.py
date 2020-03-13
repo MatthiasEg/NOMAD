@@ -7,6 +7,7 @@ import sys
 
 # Config Logging
 from statemachine.steering_command_generator import SteeringCommandGenerator
+from uart_output.uart_connector import UartConnector
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - [%(threadName)s] - %(message)s',
@@ -35,23 +36,29 @@ def startSteeringCommandGenerator():
     steering_command_generator.start()
 
 
+def startUartConnector():
+    uart_connector = UartConnector()
+    uart_connector.start()
+
+
 def main():
     logger = logging.getLogger("STARTUP")
     logger.info("starting server...")
 
-    # obstacle_detector_process = Process(target=startObstacleDetection, args=())
-    # obstacle_detector_process.start()
-    #
-    # pylon_detector_process = Process(target=startPylonDetection, args=())
-    # pylon_detector_process.start()
-    #
-    # object_detection_process = Process(target=startObjectDetection, args=())
-    # object_detection_process.start()
+    obstacle_detector_process = Process(target=startObstacleDetection, args=())
+    obstacle_detector_process.start()
 
-    # steering_command_generator_process = Process(target=startSteeringCommandGenerator, args=())
-    # steering_command_generator_process.start()
+    pylon_detector_process = Process(target=startPylonDetection, args=())
+    pylon_detector_process.start()
 
-    startSteeringCommandGenerator()
+    object_detection_process = Process(target=startObjectDetection, args=())
+    object_detection_process.start()
+
+    steering_command_generator_process = Process(target=startSteeringCommandGenerator, args=())
+    steering_command_generator_process.start()
+
+    uart_connector_process = Process(target=startUartConnector(), args=())
+    uart_connector_process.start()
 
 
 if __name__ == '__main__':
