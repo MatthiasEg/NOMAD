@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import List
 
 from statemachine.states_nomad import States
 
@@ -113,7 +112,6 @@ class TransitionsNomad:
             'source': States.ObstacleDetected.name,
             'dest': States.OrbitEntered.name
         },
-
 
         # internal transitions (no real transition happening)
         # NOTE: trigger have prefix 'internal_'

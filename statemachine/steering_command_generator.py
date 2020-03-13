@@ -30,6 +30,7 @@ class SteeringCommandGenerator(Node):
 
         self._nomad = Nomad()
 
+        # https://github.com/pytransitions/transitions#automatic-transitions-for-all-states
         self._state_machine = Machine(
             model=self._nomad,
             states=self._states,
@@ -56,13 +57,6 @@ class SteeringCommandGenerator(Node):
         trigger_for_next_state = self._state_machine.get_triggers(current_state_name)
         internal_trigger_for_current_state = [trigger for trigger in trigger_for_next_state if "internal_" in trigger]
         self._nomad.trigger(internal_trigger_for_current_state[0])
-
-        # fetch data
-        # forward to state
-        # analyze data + try to make transition
-        # if this fails repeat with next incoming data
-
-        # https://github.com/pytransitions/transitions#automatic-transitions-for-all-states
 
     def _shut_down(self):
         self._object_detector_receiver.close()
