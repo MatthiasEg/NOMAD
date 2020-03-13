@@ -21,7 +21,7 @@ class States(Enum):
 
 class StatesNomad:
     _states = [
-        State(name=States.Start.name, on_exit=['drive_fictitious_pylon_orbit']),
+        State(name=States.Start.name),
         State(name=States.DestinationPylonUnknown.name),
         State(name=States.PylonTargeted.name),
         State(name=States.TransitEndangered.name),

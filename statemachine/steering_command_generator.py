@@ -1,3 +1,4 @@
+import time
 from typing import List
 
 from shapely.geometry import Point
@@ -40,12 +41,12 @@ class SteeringCommandGenerator(Node):
             model_attribute='_state',
             queued=True
         )
-        self._current_steering_result = SteeringCommandGeneratorResult()
 
     # Node method implementations
     def _start_up(self):
         self._object_detector_receiver = Receiver("OBJECT_DETECTOR")
         self._uart_output_sender = Sender(self._node_config_name)
+        self._nomad.sender = self._uart_output_sender
 
     def _progress(self):
         # self.object_detector_result = self.__object_detector_receiver.receive()

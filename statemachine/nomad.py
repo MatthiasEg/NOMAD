@@ -3,9 +3,11 @@ from typing import List
 
 from transitions import State
 
+from communication.sender import Sender
 from object_detection.object_detector.object_detector_result import ObjectDetectorResult
 from statemachine.danger_zone import DangerZone
 from statemachine.states_nomad import States
+from statemachine.steering_command_generator_result import SteeringCommandGeneratorResult
 from statemachine.transitions_nomad import Transitions
 
 
@@ -15,22 +17,11 @@ class Nomad:
     """
 
     def __init__(self):
+        self._sender = None
         self._logger = logging.getLogger("NomadModel")
         self._state = None
         self._data = None
         self._velocity = 0
-
-    @property
-    def data(self):
-        return self._data
-
-    @data.setter
-    def data(self, current_result: ObjectDetectorResult):
-        self._data = current_result
-
-    @property
-    def state(self):
-        return self._state
 
     def slow_down(self):
         """
@@ -125,6 +116,7 @@ class Nomad:
         :return:
         """
         self._logger.debug("Driving fictitious pylon orbit")
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity=2, steering_angel=30))
         # do driving stuff
 
     def start_state_machine(self):
@@ -133,4 +125,25 @@ class Nomad:
         :return:
         """
         self._logger.debug("Starting State Machine...")
+        self.drive_fictitious_pylon_orbit()
         self.trigger(Transitions.Start_to_DestinationPylonUnknown.name)
+
+    @property
+    def data(self):
+        return self._data
+
+    @data.setter
+    def data(self, current_result: ObjectDetectorResult):
+        self._data = current_result
+
+    @property
+    def sender(self):
+        return self._sender
+
+    @sender.setter
+    def sender(self, new_sender: Sender):
+        self._sender = new_sender
+
+    @property
+    def state(self):
+        return self._state
