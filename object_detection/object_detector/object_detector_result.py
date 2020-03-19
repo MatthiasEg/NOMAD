@@ -57,8 +57,7 @@ class DetectedObject:
     Obstacles or Pylon
     """
 
-    def __init__(self, object_type: DetectedObjectType, bounding_box: BoundingBox, distance: Distance,
-                 relative_objects: List[RelativeObject]):
+    def __init__(self, object_type: DetectedObjectType, bounding_box: BoundingBox, distance: Distance, relative_objects: List[RelativeObject]):
         self._object_type = object_type
         self._bounding_box = bounding_box
         self._distance = distance  # nullable
