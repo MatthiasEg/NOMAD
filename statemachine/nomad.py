@@ -1,4 +1,5 @@
 import logging
+import time
 from typing import List
 
 from transitions import State
@@ -116,8 +117,9 @@ class Nomad:
         :return:
         """
         self._logger.debug("Driving fictitious pylon orbit")
-        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=2, curve_radius=30))
-        # do driving stuff
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=50))
+        time.sleep(1)
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100))
 
     def start_state_machine(self):
         """
