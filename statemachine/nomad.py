@@ -117,11 +117,17 @@ class Nomad:
         :return:
         """
         self._logger.debug("Driving fictitious pylon orbit")
+<<<<<<< HEAD
         self._sender.send(
             py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=-50))
         time.sleep(1)  # TODO: need to figure out how exactly we want to wait until the bigger radius is started
         self._sender.send(
             py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100))
+=======
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=50))
+        time.sleep(1)
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100))
+>>>>>>> 67413c3a00c31a63c29d5512d43bba8feb89ca85
 
     def start_state_machine(self):
         """
