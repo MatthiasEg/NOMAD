@@ -1,22 +1,18 @@
-import time
+import logging
 from typing import List
 
 from shapely.geometry import Point
+from transitions import Machine
 
 from communication.node import Node
-from transitions import Machine, State
-import logging
-
 from communication.receiver import Receiver
 from communication.sender import Sender
 from object_detection.bounding_box import BoundingBox
 from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject, \
     DetectedObjectType, Distance
-from statemachine.danger_zone import DangerZone
 from statemachine.nomad import Nomad
-from statemachine.states_nomad import States, StatesNomad
-from statemachine.steering_command_generator_result import SteeringCommandGeneratorResult
-from statemachine.transitions_nomad import TransitionsNomad, Transitions
+from statemachine.states_nomad import StatesNomad
+from statemachine.transitions_nomad import TransitionsNomad
 
 
 class SteeringCommandGenerator(Node):

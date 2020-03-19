@@ -116,7 +116,7 @@ class Nomad:
         :return:
         """
         self._logger.debug("Driving fictitious pylon orbit")
-        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity=2, steering_angel=30))
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=2, curve_radius=30))
         # do driving stuff
 
     def start_state_machine(self):
