@@ -119,44 +119,44 @@ class TransitionsNomad:
             'trigger': Transitions.internal_Start.name,
             'source': States.Start.name,
             'dest': None,
-            'after': 'start_state_machine'
+            'after': '_process_state_Start'
         },
         {
             'trigger': Transitions.internal_DestinationPylonUnknown.name,
             'source': States.DestinationPylonUnknown.name,
             'dest': None,
-            'after': 'scan_for_pylons'
+            'after': '_process_state_DestinationPylonUnknown'
         },
         {
             'trigger': Transitions.internal_PylonTargeted.name,
             'source': States.PylonTargeted.name,
             'dest': None,
-            'after': 'drive_towards_targeted_pylon'
+            'after': '_process_state_PylonTargeted'
         },
         {
             'trigger': Transitions.internal_TransitEndangered.name,
             'source': States.TransitEndangered.name,
             'dest': None,
-            'after': 'drive_towards_targeted_pylon'
+            'after': '_process_state_TransitEndangered'
         },
         {
             'trigger': Transitions.internal_OrbitTargeted.name,
             'source': States.OrbitTargeted.name,
             'dest': None,
-            'after': 'drive_towards_targeted_pylon'
+            'after': '_process_state_OrbitTargeted'
         },
         {
             'trigger': Transitions.internal_OrbitEntered.name,
             'source': States.OrbitEntered.name,
             'dest': None,
-            'after': 'drive_orbit'
+            'after': '_process_state_OrbitEntered'
         },
         {
             'trigger': Transitions.internal_ObstacleDetected.name,
             'source': States.ObstacleDetected.name,
             'dest': None,
-            'before': 'slow_down',
-            'after': 'align_horizontal_to_obstacle'
+            'before': '_slow_down',
+            'after': '_process_state_ObstacleDetected'
         }
     ]
 

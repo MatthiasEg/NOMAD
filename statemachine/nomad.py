@@ -13,33 +13,81 @@ from util.pixel_grid_nomad import PixelGridNomad
 class Nomad:
     """
     Model for the StateMachine
+
+    All internal state callbacks (with name prefix '__process_state_') which are executed whenever a new ObjectDetectorResult was received.
+    Which callback is executed is depending on the current state (_state) of the state machine.
     """
+    _sender: Sender
+    _data: ObjectDetectorResult
+    _targeted_pylon: DetectedObject
+    _pixel_grid: PixelGridNomad = PixelGridNomad()
+    _state = None
+    _logger = logging.getLogger("NomadModel")
 
-    def __init__(self):
-        self._logger = logging.getLogger("NomadModel")
+    def _process_state_Start(self):
+        """
+        State: Start
+        :return:
+        """
+        self._logger.debug("Starting State Machine...")
+        self._drive_fictitious_pylon_orbit()
+        self.trigger(Transitions.Start_to_DestinationPylonUnknown.name)
 
-        self._sender: Sender
-        self._pixel_grid: PixelGridNomad = PixelGridNomad()
+    def _process_state_DestinationPylonUnknown(self):
+        """
+        State: DestinationPylonUnknown
+        :return:
+        """
+        self._scan_for_pylons()
 
-        self._state = None
-        self._data: ObjectDetectorResult
-        self._velocity: int = 0
-        self._targeted_pylon: DetectedObject
+    def _process_state_PylonTargeted(self):
+        """
+        State: PylonTargeted
+        :return:
+        """
+        self.is_pylon_in_danger_zone()
 
-    def slow_down(self):
+    def _process_state_TransitEndangered(self):
+        """
+        State: TransitEndangered
+        :return:
+        """
+        self._drive_towards_targeted_pylon()
+
+    def _process_state_OrbitTargeted(self):
+        """
+        State: OrbitTargeted
+        :return:
+        """
+        self._drive_towards_targeted_pylon()
+
+    def _process_state_OrbitEntered(self):
+        """
+        State: OrbitEntered
+        :return:
+        """
+        self._drive_orbit()
+
+    def _process_state_ObstacleDetected(self):
+        """
+        State: ObstacleDetected
+        :return:
+        """
+        self._align_horizontal_to_obstacle()
+
+    def _slow_down(self):
         """
         State: ObstacleDetected
         After detecting an Obstacle Nomad should slow down to a defined speed. Only slow down if
         the max velocity is not already reached.
         :return:
         """
-
         pass
 
-    def align_horizontal_to_obstacle(self):
+    def _align_horizontal_to_obstacle(self):
         pass
 
-    def drive_orbit(self):
+    def _drive_orbit(self):
         """
         State: OrbitEntered
         :return:
@@ -55,13 +103,18 @@ class Nomad:
         self.trigger(Transitions.OrbitEntered_to_DestinationPylonUnknown)
         pass
 
-    def drive_towards_targeted_pylon(self):
+    def _drive_towards_targeted_pylon(self):
         """
-        State: PylonTargeted, OrbitTargeted, TransitEndangered
+        State: OrbitTargeted, TransitEndangered
         :return:
         """
         # if in state
         self._logger.debug("DRIVING towards targeted pylon....")
+
+        # create thread that contantly checks for the position of the pylon and creates steering command
+        # in a way to center the pylon as good as possible
+
+        # another thread (maybe main thread) is checking the distance of the pylon
 
         if self.state == States.OrbitTargeted.name:
             # drive towards pylon and measure distance
@@ -93,7 +146,7 @@ class Nomad:
         else:
             self.trigger(Transitions.PylonTargeted_to_OrbitTargeted.name)
 
-    def measure_distance_to_pylon(self):
+    def _measure_distance_to_pylon(self):
         """
         State:
         :return:
@@ -102,7 +155,7 @@ class Nomad:
         #
         pass
 
-    def scan_for_pylons(self):
+    def _scan_for_pylons(self):
         """
         State: DestinationPylonUnknown
         :return:
@@ -113,20 +166,12 @@ class Nomad:
             if self._pixel_grid.is_pylon_in_centered_area(most_right_pylon):
                 self._logger.debug('Pylon in center found! Initiating transition..')
                 self._drive_straight(velocity=2)
+                self._targeted_pylon = most_right_pylon
                 self.trigger(Transitions.DestinationPylonUnknown_to_PylonTargeted.name)
             else:
                 self._logger.debug('Pylon found which is not in center. Keep driving on orbit.')
                 self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100,
                                                                            driving_direction=DrivingDirection.LEFT))
-
-    def start_state_machine(self):
-        """
-        State: Start
-        :return:
-        """
-        self._logger.debug("Starting State Machine...")
-        self._drive_fictitious_pylon_orbit()
-        self.trigger(Transitions.Start_to_DestinationPylonUnknown.name)
 
     def _drive_fictitious_pylon_orbit(self):
         """

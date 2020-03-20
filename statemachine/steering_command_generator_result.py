@@ -1,6 +1,6 @@
 from enum import Enum
 
-from statemachine.radius_to_steering_angel_converter import RadiusToSteeringAngelConverter
+from util.radius_to_steering_angel_converter import RadiusToSteeringAngelConverter
 
 
 class DrivingDirection(Enum):
