@@ -14,13 +14,19 @@ class SteeringCommandGeneratorResult:
     Results of the SteeringCommandGenerator which are being sent to the uart node
     """
 
-    def __init__(self, velocity_meters_per_second: float, curve_radius_centimeters: float) -> None:
+    def __init__(self, velocity_meters_per_second: float, curve_radius_centimeters: float, driving_direction: DrivingDirection) -> None:
         """
-
         :param velocity_meters_per_second:
-        :param curve_radius_centimeters: 0 if driving straight, positive if driving right curve, negative if driving left curve
+        :param curve_radius_centimeters: determines the radius NOMAD needs to drive
+        :param driving_direction: RIGHT for a right curve, LEFT for a left curve and STRAIGHT to drive straight ahead
         """
+        if curve_radius_centimeters < 0:
+            raise ValueError(f'curve_radius_centimeters must be positive value but is: {curve_radius_centimeters}')
+
         self._velocity_meters_per_second = velocity_meters_per_second
+
+        if driving_direction == DrivingDirection.LEFT:
+            curve_radius_centimeters = curve_radius_centimeters * (-1)
         self._steering_angel = 0 if curve_radius_centimeters == DrivingDirection.STRAIGHT.value else self._convert_radius_to_steering_angel(
             curve_radius_centimeters=curve_radius_centimeters)
 

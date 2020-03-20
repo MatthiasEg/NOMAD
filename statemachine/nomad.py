@@ -1,28 +1,30 @@
 import logging
 import time
-from typing import List
-
-from transitions import State
 
 from communication.sender import Sender
-from object_detection.object_detector.object_detector_result import ObjectDetectorResult
+from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject
 from statemachine.danger_zone import DangerZone
 from statemachine.states_nomad import States
-from statemachine.steering_command_generator_result import SteeringCommandGeneratorResult
+from statemachine.steering_command_generator_result import SteeringCommandGeneratorResult, DrivingDirection
 from statemachine.transitions_nomad import Transitions
+from util.pixel_grid_nomad import PixelGridNomad
 
 
 class Nomad:
     """
-    Might be used as model for the state machine.
+    Model for the StateMachine
     """
 
     def __init__(self):
-        self._sender = None
         self._logger = logging.getLogger("NomadModel")
+
+        self._sender: Sender
+        self._pixel_grid: PixelGridNomad = PixelGridNomad()
+
         self._state = None
-        self._data = None
-        self._velocity = 0
+        self._data: ObjectDetectorResult
+        self._velocity: int = 0
+        self._targeted_pylon: DetectedObject
 
     def slow_down(self):
         """
@@ -49,17 +51,18 @@ class Nomad:
         # if obstacle is detected in front of nomad, goto state obstacle detected
         self.trigger(Transitions.OrbitEntered_to_ObstacleDetected.name)
         # if in next frames pylon to the right side is detected drive fi
-        self.drive_fictitious_pylon_orbit()
+        self._drive_fictitious_pylon_orbit()
         self.trigger(Transitions.OrbitEntered_to_DestinationPylonUnknown)
         pass
 
     def drive_towards_targeted_pylon(self):
         """
-        State: OrbitTargeted, TransitEndangered
+        State: PylonTargeted, OrbitTargeted, TransitEndangered
         :return:
         """
         # if in state
-        self._logger.debug("DRIVING....")
+        self._logger.debug("DRIVING towards targeted pylon....")
+
         if self.state == States.OrbitTargeted.name:
             # drive towards pylon and measure distance
             # watch out for pylons on right side of targeted pylon
@@ -73,13 +76,13 @@ class Nomad:
 
             # if distance to horizontal axis of pylon in danger zone <=1m do drive_fictitious_pylon_orbit
             if False:
-                self.drive_fictitious_pylon_orbit()
+                self._drive_fictitious_pylon_orbit()
                 self.trigger(Transitions.TransitEndangered_to_DestinationPylonUnknown.name)
             pass
 
     def is_pylon_in_danger_zone(self):
         """
-        State: PylonTargeted
+
         :return:
         """
         # if in danger zone switch to
@@ -104,24 +107,17 @@ class Nomad:
         State: DestinationPylonUnknown
         :return:
         """
-        # process data and initiate transitions to next state if pylon is detected and in center.
-        # if nothing is found, keep scanning while driving
-        # if pylon is still to much on left side, keep driving on circle until pylon perfectly in front
 
-        # if pylon is centered
-        self.trigger(Transitions.DestinationPylonUnknown_to_PylonTargeted.name)
-
-    def drive_fictitious_pylon_orbit(self):
-        """
-        State: on_exit Start
-        :return:
-        """
-        self._logger.debug("Driving fictitious pylon orbit")
-        self._sender.send(
-            py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=-50))
-        time.sleep(1)  # TODO: need to figure out how exactly we want to wait until the bigger radius is started
-        self._sender.send(
-            py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100))
+        if self._data.has_pylons():
+            most_right_pylon = self._data.get_most_right_pylon()
+            if self._pixel_grid.is_pylon_in_centered_area(most_right_pylon):
+                self._logger.debug('Pylon in center found! Initiating transition..')
+                self._drive_straight(velocity=2)
+                self.trigger(Transitions.DestinationPylonUnknown_to_PylonTargeted.name)
+            else:
+                self._logger.debug('Pylon found which is not in center. Keep driving on orbit.')
+                self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100,
+                                                                           driving_direction=DrivingDirection.LEFT))
 
     def start_state_machine(self):
         """
@@ -129,11 +125,22 @@ class Nomad:
         :return:
         """
         self._logger.debug("Starting State Machine...")
-        self.drive_fictitious_pylon_orbit()
+        self._drive_fictitious_pylon_orbit()
         self.trigger(Transitions.Start_to_DestinationPylonUnknown.name)
 
+    def _drive_fictitious_pylon_orbit(self):
+        """
+        :return:
+        """
+        self._logger.debug("Driving fictitious pylon orbit")
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=50,
+                                                                   driving_direction=DrivingDirection.RIGHT))
+        time.sleep(1)  # TODO: need to figure out how exactly we want to wait until the bigger radius is started. IMU Data? Encoder?
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100,
+                                                                   driving_direction=DrivingDirection.LEFT))
+
     @property
-    def data(self):
+    def data(self) -> ObjectDetectorResult:
         return self._data
 
     @data.setter
@@ -141,7 +148,7 @@ class Nomad:
         self._data = current_result
 
     @property
-    def sender(self):
+    def sender(self) -> Sender:
         return self._sender
 
     @sender.setter
@@ -151,3 +158,7 @@ class Nomad:
     @property
     def state(self):
         return self._state
+
+    def _drive_straight(self, velocity: int):
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=velocity, curve_radius_centimeters=0,
+                                                                   driving_direction=DrivingDirection.STRAIGHT))

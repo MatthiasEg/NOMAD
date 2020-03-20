@@ -131,7 +131,7 @@ class TransitionsNomad:
             'trigger': Transitions.internal_PylonTargeted.name,
             'source': States.PylonTargeted.name,
             'dest': None,
-            'after': 'is_pylon_in_danger_zone'
+            'after': 'drive_towards_targeted_pylon'
         },
         {
             'trigger': Transitions.internal_TransitEndangered.name,

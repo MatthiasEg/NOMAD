@@ -62,13 +62,13 @@ class SteeringCommandGenerator(Node):
     @staticmethod
     def _create_fake_data() -> ObjectDetectorResult:
         estimated_pylon = DetectedObject(
-            object_type=DetectedObjectType.pylon,
+            object_type=DetectedObjectType.Pylon,
             bounding_box=BoundingBox.of_rectangle_by_center(center=Point(12, 40), width=100, height=500),
             distance=Distance(value=12.5, measured=False),
             relative_objects=List[None]
         )
         measured_pylon = DetectedObject(
-            object_type=DetectedObjectType.pylon,
+            object_type=DetectedObjectType.Pylon,
             bounding_box=BoundingBox.of_rectangle_by_center(center=Point(1920 / 2, 1080 / 2), width=100, height=500),
             distance=Distance(value=12.5, measured=True),
             relative_objects=List[None]

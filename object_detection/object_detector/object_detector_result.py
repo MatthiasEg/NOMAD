@@ -6,8 +6,8 @@ from object_detection.bounding_box import BoundingBox
 
 
 class DetectedObjectType(Enum):
-    pylon = 0
-    square_timber = 1
+    Pylon = 0
+    SquareTimber = 1
 
 
 class Distance:
@@ -94,8 +94,28 @@ class ObjectDetectorResult:
         self._timestamp = datetime.timestamp(datetime.now())
         self._detected_objects = detected_objects
 
+    def get_most_right_pylon(self) -> DetectedObject:
+        if self.has_pylons():
+            most_right_x = 0
+            most_right_pylon = 0
+            pylons = self._get_pylons_only()
+            for pylon in pylons:
+                if most_right_x < pylon.bounding_box.shape.centroid.x:
+                    most_right_x = pylon.bounding_box.shape.centroid.x
+                    most_right_pylon = pylon
+            return most_right_pylon
+        else:
+            raise Exception(f'Cannot get most right pylon, as there is no pylon! DetectedObjects are: {self._detected_objects}')
+
+    def has_pylons(self) -> bool:
+        pylons = self._get_pylons_only()
+        return len(pylons) > 0
+
+    def _get_pylons_only(self) -> List[DetectedObject]:
+        return [detected_object for detected_object in self._detected_objects if detected_object.object_type == DetectedObjectType.Pylon]
+
     @property
-    def detected_objects(self) -> List[DetectedObject]:
+    def get_detected_objects(self) -> List[DetectedObject]:
         return self._detected_objects
 
     @property
