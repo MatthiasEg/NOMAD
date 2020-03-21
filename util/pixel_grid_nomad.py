@@ -1,4 +1,5 @@
-from typing import Tuple
+from enum import Enum, auto
+from typing import Tuple, List
 
 from shapely.geometry import Point
 import matplotlib.pyplot as plt
@@ -11,6 +12,19 @@ from object_detection.object_detector.object_detector_result import DetectedObje
 from statemachine.steering_command_generator_result import DrivingDirection
 
 
+class GridArea(Enum):
+    LEFT = 0
+    RIGHT = 1
+    TOP = 2
+    BOTTOM = 3
+
+
+class PylonSide(Enum):
+    LEFT = 0
+    RIGHT = 1
+    CENTER_PERFECT = 2
+
+
 class PixelGridNomad:
     _x: int = 1920
     _y: int = 1080
@@ -21,6 +35,25 @@ class PixelGridNomad:
     def is_pylon_in_centered_area(self, pylon: DetectedObject) -> bool:
         pylon_x = pylon.bounding_box.center_x()
         return (pylon_x > (self._center_x - self._x_center_width / 2)) and (pylon_x < (self._center_x + self._x_center_width / 2))
+
+    def get_side_of_pylon(self, pylon: DetectedObject) -> PylonSide:
+        pylon_x = pylon.bounding_box.center_x()
+        if pylon_x > self._center_x:
+            return PylonSide.RIGHT
+        elif pylon_x < self._center_x:
+            return PylonSide.LEFT
+        else:
+            return PylonSide.CENTER_PERFECT
+
+    def filter_pylons_of_area(self, pylons: List[DetectedObject], area: GridArea) -> List[DetectedObject]:
+        if area == GridArea.LEFT:
+            return list(filter(lambda pylon: (pylon.bounding_box.center_x() <= self._center_x), pylons))
+        elif area == GridArea.RIGHT:
+            return list(filter(lambda pylon: (pylon.bounding_box.center_x() >= self._center_x), pylons))
+        elif area == GridArea.TOP:
+            return list(filter(lambda pylon: (pylon.bounding_box.center_y() >= self._center_y), pylons))
+        else:
+            return list(filter(lambda pylon: (pylon.bounding_box.center_y() <= self._center_y), pylons))
 
     def show_test_picture_with_grid(self, step_count: int):
         image = Image.new(mode='L', size=(self._x, self._y), color=255)

@@ -1,13 +1,15 @@
 import logging
 import time
+from typing import Any
 
 from communication.sender import Sender
-from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject
+from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject, Distance
 from statemachine.danger_zone import DangerZone
 from statemachine.states_nomad import States
 from statemachine.steering_command_generator_result import SteeringCommandGeneratorResult, DrivingDirection
+from statemachine.steering_communicator import SteeringCommunicator
 from statemachine.transitions_nomad import Transitions
-from util.pixel_grid_nomad import PixelGridNomad
+from util.pixel_grid_nomad import PixelGridNomad, PylonSide
 
 
 class Nomad:
@@ -17,10 +19,11 @@ class Nomad:
     All internal state callbacks (with name prefix '__process_state_') which are executed whenever a new ObjectDetectorResult was received.
     Which callback is executed is depending on the current state (_state) of the state machine.
     """
-    _sender: Sender
     _data: ObjectDetectorResult
     _targeted_pylon: DetectedObject
     _pixel_grid: PixelGridNomad = PixelGridNomad()
+    _danger_zone: DangerZone = DangerZone(_pixel_grid)
+    _steering_communicator: SteeringCommunicator = SteeringCommunicator()
     _state = None
     _logger = logging.getLogger("NomadModel")
 
@@ -38,14 +41,39 @@ class Nomad:
         State: DestinationPylonUnknown
         :return:
         """
-        self._scan_for_pylons()
+        if self._data.has_pylons():
+            most_right_pylon = self._data.get_most_right_pylon()
+            if self._pixel_grid.is_pylon_in_centered_area(most_right_pylon):
+                self._logger.debug('Pylon in center found! Initiating transition..')
+                self._drive_straight(velocity=2)
+                self._targeted_pylon = most_right_pylon
+                self.trigger(Transitions.DestinationPylonUnknown_to_PylonTargeted.name)
+            else:
+                side: PylonSide = self._pixel_grid.get_side_of_pylon(most_right_pylon)
+                if side == PylonSide.LEFT:
+                    self._logger.debug(
+                        f'Most right pylon with center \'{most_right_pylon.bounding_box.center()}\' was detected to the left of the center.'
+                        f'Keep driving on orbit.')
+                    self._steering_communicator.send(velocity_meters_per_second=1,
+                                                     curve_radius_centimeters=100,
+                                                     driving_direction=DrivingDirection.LEFT)
+                else:
+                    self._logger.debug(
+                        f'Most right pylon with center \'{most_right_pylon.bounding_box.center()}\' was detected to the right of the center.'
+                        f'Keep driving on orbit.')
+                    # TODO: Handling when Pylon was detected to the right of the center
 
     def _process_state_PylonTargeted(self):
         """
         State: PylonTargeted
         :return:
         """
-        self.is_pylon_in_danger_zone()
+        if self._danger_zone.is_relevant(all_pylons=self._data.get_pylons_only(), targeted_pylon=self._targeted_pylon):
+            self._logger.debug("Pylon in Danger Zone!!! Slowing down + transition to TransitEndangered..")
+            self._slow_down()
+            self.trigger(Transitions.PylonTargeted_to_TransitEndangered.name)
+        else:
+            self.trigger(Transitions.PylonTargeted_to_OrbitTargeted.name)
 
     def _process_state_TransitEndangered(self):
         """
@@ -66,7 +94,7 @@ class Nomad:
         State: OrbitEntered
         :return:
         """
-        self._drive_orbit()
+        self._drive_orbit(curve_radius_centimeters=100)
 
     def _process_state_ObstacleDetected(self):
         """
@@ -74,25 +102,6 @@ class Nomad:
         :return:
         """
         self._align_horizontal_to_obstacle()
-
-    def _scan_for_pylons(self):
-        """
-        State: DestinationPylonUnknown
-        :return:
-        """
-        if self._data.has_pylons():
-            most_right_pylon = self._data.get_most_right_pylon()
-            if self._pixel_grid.is_pylon_in_centered_area(most_right_pylon):
-                self._logger.debug('Pylon in center found! Initiating transition..')
-                self._drive_straight(velocity=2)
-                self._targeted_pylon = most_right_pylon
-                self.trigger(Transitions.DestinationPylonUnknown_to_PylonTargeted.name)
-            else:
-                self._logger.debug(
-                    f'Pylon detected which should be to the left of the center. Pylon center: {most_right_pylon.bounding_box.center()}.'
-                    f'Keep driving on orbit.')
-                self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100,
-                                                                           driving_direction=DrivingDirection.LEFT))
 
     def _drive_towards_targeted_pylon(self):
         """
@@ -129,13 +138,13 @@ class Nomad:
         :return:
         """
         self._logger.debug("Driving fictitious pylon orbit")
-        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=50,
-                                                                   driving_direction=DrivingDirection.RIGHT))
+        self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50,
+                                         driving_direction=DrivingDirection.RIGHT)
         time.sleep(1)  # TODO: need to figure out how exactly we want to wait until the bigger radius is started. IMU Data? Encoder?
-        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100,
-                                                                   driving_direction=DrivingDirection.LEFT))
+        self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=100,
+                                         driving_direction=DrivingDirection.LEFT)
 
-    def _drive_orbit(self, radius: int):
+    def _drive_orbit(self, curve_radius_centimeters: int):
         """
         State: OrbitEntered
         :return:
@@ -158,37 +167,13 @@ class Nomad:
         the max velocity is not already reached.
         :return:
         """
-        pass
+        self._steering_communicator.send(velocity_meters_per_second=0.5)
 
     def _align_horizontal_to_obstacle(self):
         pass
 
-    def is_pylon_in_danger_zone(self):
-        """
-
-        :return:
-        """
-        # if in danger zone switch to
-        self._logger.debug("Is Pylon in danger zone?")
-        danger_zone = DangerZone()
-        if danger_zone.is_relevant():
-            self.trigger(Transitions.PylonTargeted_to_TransitEndangered.name)
-        else:
-            self.trigger(Transitions.PylonTargeted_to_OrbitTargeted.name)
-
-    def _measure_distance_to_pylon(self):
-        """
-        State:
-        :return:
-        """
-        # measure distance to pylon
-        #
-        pass
-
     def _drive_straight(self, velocity: int):
-        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=velocity, curve_radius_centimeters=0,
-                                                                   driving_direction=DrivingDirection.STRAIGHT))
-
+        self._steering_communicator.send(velocity_meters_per_second=velocity, curve_radius_centimeters=0, driving_direction=DrivingDirection.STRAIGHT)
 
     @property
     def data(self) -> ObjectDetectorResult:
@@ -198,15 +183,9 @@ class Nomad:
     def data(self, current_result: ObjectDetectorResult):
         self._data = current_result
 
-    @property
-    def sender(self) -> Sender:
-        return self._sender
-
-    @sender.setter
-    def sender(self, new_sender: Sender):
-        self._sender = new_sender
+    def set_sender(self, new_sender: Sender):
+        self._steering_communicator.sender = new_sender
 
     @property
     def state(self):
         return self._state
-

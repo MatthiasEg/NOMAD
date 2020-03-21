@@ -23,7 +23,9 @@ class SteeringCommandGeneratorResult:
         if curve_radius_centimeters < 0:
             raise ValueError(f'curve_radius_centimeters must be positive value but is: {curve_radius_centimeters}')
 
+        self._driving_direction: DrivingDirection = driving_direction
         self._velocity_meters_per_second = velocity_meters_per_second
+        self._curve_radius_centimeters = curve_radius_centimeters
 
         if driving_direction == DrivingDirection.LEFT:
             curve_radius_centimeters = curve_radius_centimeters * (-1)
@@ -37,6 +39,14 @@ class SteeringCommandGeneratorResult:
     @property
     def steering_angel(self):
         return self._steering_angel
+
+    @property
+    def driving_direction(self):
+        return self._driving_direction
+
+    @property
+    def curve_radius_centimeters(self):
+        return self._curve_radius_centimeters
 
     @staticmethod
     def _convert_radius_to_steering_angel(curve_radius_centimeters: float) -> float:

@@ -28,10 +28,10 @@ class Distance:
 
 
 class RelativeObjectType(Enum):
-    in_front = 0
-    behind = 1
-    right = 2
-    left = 3
+    IN_FRONT = 0
+    BEHIND = 1
+    RIGHT = 2
+    LEFT = 3
 
 
 class RelativeObject:
@@ -57,11 +57,22 @@ class DetectedObject:
     Obstacles or Pylon
     """
 
-    def __init__(self, object_type: DetectedObjectType, bounding_box: BoundingBox, distance: Distance, relative_objects: List[RelativeObject]):
-        self._object_type = object_type
-        self._bounding_box = bounding_box
-        self._distance = distance  # nullable
-        self._relative_objects = relative_objects
+    def __init__(self, object_type: DetectedObjectType, bounding_box: BoundingBox, distance: Distance, relative_objects: List[RelativeObject] = []):
+        self._object_type: DetectedObjectType = object_type
+        self._bounding_box: BoundingBox = bounding_box
+        self._distance: Distance = distance  # nullable
+        self._relative_objects: List[RelativeObject] = relative_objects
+
+    def relative_detected_objects_from_relative_type(self, relative_type: RelativeObjectType) -> List[DetectedObject]:
+        if len(list(self._relative_objects)) == 0:
+            empty_list: List[DetectedObject] = []
+            return empty_list
+        relative_objects_matching_relative_type = [relative_object for relative_object in self.relative_objects if relative_object.relative_type == relative_type]
+        detected_objects_matching_relative_type: List[DetectedObject] = []
+
+        for relative_object in relative_objects_matching_relative_type:
+            detected_objects_matching_relative_type.append(relative_object.detected_object)
+        return detected_objects_matching_relative_type
 
     @property
     def object_type(self) -> DetectedObjectType:
@@ -98,7 +109,7 @@ class ObjectDetectorResult:
         if self.has_pylons():
             most_right_x = 0
             most_right_pylon = 0
-            pylons = self._get_pylons_only()
+            pylons = self.get_pylons_only()
             for pylon in pylons:
                 if most_right_x < pylon.bounding_box.shape.centroid.x:
                     most_right_x = pylon.bounding_box.shape.centroid.x
@@ -108,10 +119,10 @@ class ObjectDetectorResult:
             raise Exception(f'Cannot get most right pylon, as there is no pylon! DetectedObjects are: {self._detected_objects}')
 
     def has_pylons(self) -> bool:
-        pylons = self._get_pylons_only()
+        pylons = self.get_pylons_only()
         return len(pylons) > 0
 
-    def _get_pylons_only(self) -> List[DetectedObject]:
+    def get_pylons_only(self) -> List[DetectedObject]:
         return [detected_object for detected_object in self._detected_objects if detected_object.object_type == DetectedObjectType.Pylon]
 
     @property
