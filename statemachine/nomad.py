@@ -75,33 +75,24 @@ class Nomad:
         """
         self._align_horizontal_to_obstacle()
 
-    def _slow_down(self):
+    def _scan_for_pylons(self):
         """
-        State: ObstacleDetected
-        After detecting an Obstacle Nomad should slow down to a defined speed. Only slow down if
-        the max velocity is not already reached.
+        State: DestinationPylonUnknown
         :return:
         """
-        pass
-
-    def _align_horizontal_to_obstacle(self):
-        pass
-
-    def _drive_orbit(self):
-        """
-        State: OrbitEntered
-        :return:
-        """
-        # drive orbit with radius of 1 meter or 0.5 meter depending of measured distance
-        # scan for pylon while driving, if one is detected keep driving until it is centered
-        # then drive towards pylon
-        self.trigger(Transitions.OrbitEntered_to_PylonTargeted.name)
-        # if obstacle is detected in front of nomad, goto state obstacle detected
-        self.trigger(Transitions.OrbitEntered_to_ObstacleDetected.name)
-        # if in next frames pylon to the right side is detected drive fi
-        self._drive_fictitious_pylon_orbit()
-        self.trigger(Transitions.OrbitEntered_to_DestinationPylonUnknown)
-        pass
+        if self._data.has_pylons():
+            most_right_pylon = self._data.get_most_right_pylon()
+            if self._pixel_grid.is_pylon_in_centered_area(most_right_pylon):
+                self._logger.debug('Pylon in center found! Initiating transition..')
+                self._drive_straight(velocity=2)
+                self._targeted_pylon = most_right_pylon
+                self.trigger(Transitions.DestinationPylonUnknown_to_PylonTargeted.name)
+            else:
+                self._logger.debug(
+                    f'Pylon detected which should be to the left of the center. Pylon center: {most_right_pylon.bounding_box.center()}.'
+                    f'Keep driving on orbit.')
+                self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100,
+                                                                           driving_direction=DrivingDirection.LEFT))
 
     def _drive_towards_targeted_pylon(self):
         """
@@ -133,6 +124,45 @@ class Nomad:
                 self.trigger(Transitions.TransitEndangered_to_DestinationPylonUnknown.name)
             pass
 
+    def _drive_fictitious_pylon_orbit(self):
+        """
+        :return:
+        """
+        self._logger.debug("Driving fictitious pylon orbit")
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=50,
+                                                                   driving_direction=DrivingDirection.RIGHT))
+        time.sleep(1)  # TODO: need to figure out how exactly we want to wait until the bigger radius is started. IMU Data? Encoder?
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100,
+                                                                   driving_direction=DrivingDirection.LEFT))
+
+    def _drive_orbit(self, radius: int):
+        """
+        State: OrbitEntered
+        :return:
+        """
+        # drive orbit with radius of 1 meter or 0.5 meter depending of measured distance
+        # scan for pylon while driving, if one is detected keep driving until it is centered
+        # then drive towards pylon
+        self.trigger(Transitions.OrbitEntered_to_PylonTargeted.name)
+        # if obstacle is detected in front of nomad, goto state obstacle detected
+        self.trigger(Transitions.OrbitEntered_to_ObstacleDetected.name)
+        # if in next frames pylon to the right side is detected drive fi
+        self._drive_fictitious_pylon_orbit()
+        self.trigger(Transitions.OrbitEntered_to_DestinationPylonUnknown)
+        pass
+
+    def _slow_down(self):
+        """
+        State: ObstacleDetected
+        After detecting an Obstacle Nomad should slow down to a defined speed. Only slow down if
+        the max velocity is not already reached.
+        :return:
+        """
+        pass
+
+    def _align_horizontal_to_obstacle(self):
+        pass
+
     def is_pylon_in_danger_zone(self):
         """
 
@@ -155,34 +185,10 @@ class Nomad:
         #
         pass
 
-    def _scan_for_pylons(self):
-        """
-        State: DestinationPylonUnknown
-        :return:
-        """
+    def _drive_straight(self, velocity: int):
+        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=velocity, curve_radius_centimeters=0,
+                                                                   driving_direction=DrivingDirection.STRAIGHT))
 
-        if self._data.has_pylons():
-            most_right_pylon = self._data.get_most_right_pylon()
-            if self._pixel_grid.is_pylon_in_centered_area(most_right_pylon):
-                self._logger.debug('Pylon in center found! Initiating transition..')
-                self._drive_straight(velocity=2)
-                self._targeted_pylon = most_right_pylon
-                self.trigger(Transitions.DestinationPylonUnknown_to_PylonTargeted.name)
-            else:
-                self._logger.debug('Pylon found which is not in center. Keep driving on orbit.')
-                self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100,
-                                                                           driving_direction=DrivingDirection.LEFT))
-
-    def _drive_fictitious_pylon_orbit(self):
-        """
-        :return:
-        """
-        self._logger.debug("Driving fictitious pylon orbit")
-        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=50,
-                                                                   driving_direction=DrivingDirection.RIGHT))
-        time.sleep(1)  # TODO: need to figure out how exactly we want to wait until the bigger radius is started. IMU Data? Encoder?
-        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=1, curve_radius_centimeters=100,
-                                                                   driving_direction=DrivingDirection.LEFT))
 
     @property
     def data(self) -> ObjectDetectorResult:
@@ -204,6 +210,3 @@ class Nomad:
     def state(self):
         return self._state
 
-    def _drive_straight(self, velocity: int):
-        self._sender.send(py_object=SteeringCommandGeneratorResult(velocity_meters_per_second=velocity, curve_radius_centimeters=0,
-                                                                   driving_direction=DrivingDirection.STRAIGHT))
