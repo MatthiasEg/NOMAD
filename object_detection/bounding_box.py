@@ -12,6 +12,9 @@ class BoundingBox:
         self._center: Point = shape.centroid
         self._center_x: int = self._center.x
         self._center_y: int = self._center.y
+        self.min_x, self.min_y, self.max_x, self.max_y = self._shape.bounds
+        self.height = self.max_y - self.min_y
+        self.width = self.max_x - self.min_x
 
     def intersects(self, other: BoundingBox) -> bool:
         return self._shape.intersects(other._shape)
@@ -22,10 +25,10 @@ class BoundingBox:
 
     @staticmethod
     def of_rectangle_by_center(center: Point, width: int, height: int) -> BoundingBox:
-        min_x = center.x - width / 2
-        min_y = center.y - height / 2
-        max_x = center.x + width / 2
-        max_y = center.y + height / 2
+        min_x = int(round(center.x - (width / 2)))
+        min_y = int(round(center.y - (height / 2)))
+        max_x = int(round(center.x + (width / 2)))
+        max_y = int(round(center.y + (height / 2)))
         return BoundingBox(box(min_x, min_y, max_x, max_y))
 
     @staticmethod

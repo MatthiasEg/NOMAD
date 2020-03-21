@@ -19,20 +19,23 @@ class Pylon:
     def bounding_box(self):
         return self._bounding_box
 
+    @property
+    def distance(self):
+        return self._distance
 
 class PylonDetectorResult:
 
     def __init__(self, pylons: List[Pylon]):
-        self._pylons = pylons
+        self.pylons = pylons
 
     def get_any_pylon_which_intersects(self, bounding_box: BoundingBox) -> Optional[Pylon]:
-        for pylon in self._pylons:
+        for pylon in self.pylons:
             if pylon.bounding_box.intersects(bounding_box):
                 return pylon
         return None
 
     def __str__(self):
         pylon_string_representation = ""
-        for pylon in self._pylons:
+        for pylon in self.pylons:
             pylon_string_representation += str(pylon)
         return pylon_string_representation
