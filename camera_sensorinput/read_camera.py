@@ -4,7 +4,7 @@ import cv2
 class ReadCamera:
 
     def __init__(self):
-        self.cap = cv2.VideoCapture("/home/manuel/PREN/workspaces/informatik/object_detection/darknet/images/video3.mp4")
+        self.cap = cv2.VideoCapture("/home/manuel/PREN/workspaces/informatik/object_detection/darknet/images/distance.mp4")
         self.cap.set(4, 832)
         self.cap.set(3, 832)
 

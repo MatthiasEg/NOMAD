@@ -4,9 +4,9 @@ from typing import List
 import cv2
 from shapely.geometry import Point
 
-from camera_sensorinput.read_camera import ReadCamera
 from object_detection.bounding_box import BoundingBox
 from object_detection.darknet import darknet
+from object_detection.object_detector.object_detector_result import DetectedObject, DetectedObjectType, Distance
 
 
 def _load_meta_path():
@@ -30,13 +30,17 @@ def _load_config_path():
     return config_path
 
 
-def _convert_detections_to_bounding_boxes(detections):
-    bounding_boxes = []
+def _create_detected_objects_for_pylons(detections) -> List[DetectedObject]:
+    detected_objects = []
     for detection in detections:
-        x, y, w, h = detection[2][0], detection[2][1], detection[2][2], detection[2][3]
-        rectangle_center_point = Point(x, y)
-        bounding_boxes.append(BoundingBox.of_rectangle_by_center(rectangle_center_point, w, h))
-    return bounding_boxes
+        probability: int = round(detection[1] * 100, 2)
+        rectangle_center_point: Point = Point(detection[2][0], detection[2][1])
+        width = detection[2][2]
+        height = detection[2][3]
+        bounding_box: BoundingBox = BoundingBox.of_rectangle_by_center(rectangle_center_point, width, height)
+        detected_object = DetectedObject(DetectedObjectType.Pylon, bounding_box, Distance(-1, False), probability)
+        detected_objects.append(detected_object)
+    return detected_objects
 
 
 class DarknetWrapper:
@@ -79,10 +83,10 @@ class DarknetWrapper:
             pass
         return None
 
-    def detect_pylon_bounding_boxes(self, frame) -> List[BoundingBox]:
+    def detect_pylons(self, frame) -> List[DetectedObject]:
         self._initialize_darknet_image(frame)
         detections = darknet.detect_image(self._net_main, self._meta_main, self._darknet_image, thresh=0.25)
-        return _convert_detections_to_bounding_boxes(detections)
+        return _create_detected_objects_for_pylons(detections)
 
     def _initialize_darknet_image(self, frame):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

@@ -5,7 +5,7 @@ import cv2
 from camera_sensorinput.read_camera import ReadCamera
 from communication.receiver import Receiver
 from communication.node import Node
-from object_detection.pylon_detector.pylon_detector_result import Pylon
+from object_detection.object_detector.object_detector_result import DetectedObject, DetectedObjectType
 
 
 class PylonDetectorVisualizer(Node):
@@ -15,7 +15,7 @@ class PylonDetectorVisualizer(Node):
         super().__init__(self._node_config_section)
         self._sensor_input_camera = ReadCamera()
 
-    def cvDrawBoxes(self, pylons: List[Pylon], frame):
+    def cvDrawBoxes(self, pylons: List[DetectedObject], frame):
         for pylon in pylons:
             xmin = int(pylon.bounding_box.min_x)
             ymin = int(pylon.bounding_box.min_y)
@@ -24,7 +24,18 @@ class PylonDetectorVisualizer(Node):
             pt1 = (xmin, ymin)
             pt2 = (xmax, ymax)
             cv2.rectangle(frame, pt1, pt2, (0, 255, 0), 1)
+
+            type_decription = "Unknown:"
+            if pylon.object_type == DetectedObjectType.Pylon:
+                type_decription = "Pylon:"
+
+            cv2.putText(frame, type_decription,
+                        (pt1[0], pt1[1] - 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                        [0, 255, 0], 2)
             cv2.putText(frame, str(pylon.distance),
+                        (pt1[0], pt1[1] - 25), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
+                        [0, 255, 0], 2)
+            cv2.putText(frame, "Probability [" + str(pylon.probability) + "]",
                         (pt1[0], pt1[1] - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                         [0, 255, 0], 2)
         return frame

@@ -13,8 +13,8 @@ class BoundingBox:
         self._center_x: int = self._center.x
         self._center_y: int = self._center.y
         self.min_x, self.min_y, self.max_x, self.max_y = self._shape.bounds
-        self.height = self.max_y - self.min_y
-        self.width = self.max_x - self.min_x
+        self._height = self.max_y - self.min_y
+        self._width = self.max_x - self.min_x
 
     def intersects(self, other: BoundingBox) -> bool:
         return self._shape.intersects(other._shape)
@@ -38,6 +38,14 @@ class BoundingBox:
     @property
     def shape(self):
         return self._shape
+
+    @property
+    def width(self):
+        return self._width
+
+    @property
+    def height(self):
+        return self._height
 
     def center_x(self):
         return self._center_x

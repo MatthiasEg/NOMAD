@@ -1,8 +1,8 @@
 from enum import Enum
 import logging
 
+from object_detection.object_detector.object_detector_result import DetectedObject
 from object_detection.obstacle_detector.obstacle_detector_result import ObstacleDetectorResult
-from object_detection.pylon_detector.pylon_detector_result import Pylon
 
 
 class Situation(Enum):
@@ -18,13 +18,13 @@ class Situation(Enum):
 class SituationAnalyzer:
     _logger = logging.getLogger("SituationAnalyzer")
 
-    def analyze(self, centred_pylon: Pylon, obstacle_detector_result: ObstacleDetectorResult) -> Situation:
+    def analyze(self, centred_pylon: DetectedObject, obstacle_detector_result: ObstacleDetectorResult) -> Situation:
         if centred_pylon is not None:
             return self.analyze_with_centred_pylon(centred_pylon, obstacle_detector_result)
         else:
             return self.analyze_without_centred_pylon(obstacle_detector_result)
 
-    def analyze_with_centred_pylon(self, centred_pylon: Pylon, obstacle_detector_result: ObstacleDetectorResult) \
+    def analyze_with_centred_pylon(self, centred_pylon: DetectedObject, obstacle_detector_result: ObstacleDetectorResult) \
             -> Situation:
         if obstacle_detector_result._contact_bottom:
             if obstacle_detector_result._distance_top == obstacle_detector_result._distance_bottom:
