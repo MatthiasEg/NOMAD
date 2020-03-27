@@ -25,6 +25,11 @@ class PylonSide(Enum):
     CENTER_PERFECT = 2
 
 
+class Resolution(Enum):
+    WIDTH = 1920
+    HEIGHT = 1080
+
+
 class PixelGridNomad:
     _x: int = 1920
     _y: int = 1080
@@ -36,7 +41,7 @@ class PixelGridNomad:
         pylon_x = pylon.bounding_box.center_x()
         return (pylon_x > (self._center_x - self._x_center_width / 2)) and (pylon_x < (self._center_x + self._x_center_width / 2))
 
-    def get_side_of_pylon(self, pylon: DetectedObject) -> PylonSide:
+    def side_of_pylon(self, pylon: DetectedObject) -> PylonSide:
         pylon_x = pylon.bounding_box.center_x()
         if pylon_x > self._center_x:
             return PylonSide.RIGHT
@@ -44,6 +49,61 @@ class PixelGridNomad:
             return PylonSide.LEFT
         else:
             return PylonSide.CENTER_PERFECT
+
+    def distances_to_center(self, pylon: DetectedObject) -> Tuple[int, int]:
+        """
+        Calculates the pixel count between a pylon and the center of the camera.
+        :param pylon: The pylon to which the distance in pixel is measured.
+        :return:
+        x_distance_to_center = negative value, if pylon is to the right of the center, positive value if to the left
+        y_distance_to_center = negative value, if pylon further up than the center, positive value if further down
+        """
+        x_distance_to_center = self._center_x - pylon.bounding_box.center_x()
+        y_distance_to_center = self._center_y - pylon.bounding_box.center_y()
+
+        return x_distance_to_center, y_distance_to_center
+
+    @staticmethod
+    def get_most_right_pylon(pylons: List[DetectedObject]) -> DetectedObject:
+        most_right_x = 0
+        most_right_pylon = None
+        for pylon in pylons:
+            if most_right_x < pylon.bounding_box.center_x():
+                most_right_x = pylon.bounding_box.center_x()
+                most_right_pylon = pylon
+        return most_right_pylon
+
+    @staticmethod
+    def get_most_left_pylon(pylons: List[DetectedObject]) -> DetectedObject:
+        most_left_x = Resolution.WIDTH
+        most_left_pylon = None
+        for pylon in pylons:
+            if most_left_x > pylon.bounding_box.center_x():
+                most_left_x = pylon.bounding_box.center_x()
+                most_left_pylon = pylon
+        return most_left_pylon
+
+    def has_other_pylons_to_the_right(self, targeted_pylon: DetectedObject, pylons: List[DetectedObject]) -> bool:
+        pylons_without_targeted_pylon = [pylon for pylon in pylons if pylon is not targeted_pylon]
+        other_pylons_to_the_right = self.filter_pylons_of_area(pylons_without_targeted_pylon, GridArea.RIGHT)
+
+        return len(other_pylons_to_the_right) != 0
+
+    def most_centered_pylon(self, pylons: List[DetectedObject]) -> DetectedObject:
+        min_x_distance_to_center = self._x
+        min_y_distance_to_center = self._y
+        min_combined_distance_to_center = min_x_distance_to_center + min_y_distance_to_center
+        most_centered_pylon = None
+
+        for pylon in pylons:
+            x_distance_to_center = abs(self._center_x - pylon.bounding_box.center_x())
+            y_distance_to_center = abs(self._center_y - pylon.bounding_box.center_y())
+            combined_distance_to_center = x_distance_to_center + y_distance_to_center
+            if combined_distance_to_center < min_combined_distance_to_center:
+                min_combined_distance_to_center = combined_distance_to_center
+                most_centered_pylon = pylon
+
+        return most_centered_pylon
 
     def filter_pylons_of_area(self, pylons: List[DetectedObject], area: GridArea) -> List[DetectedObject]:
         if area == GridArea.LEFT:

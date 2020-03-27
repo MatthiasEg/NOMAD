@@ -7,7 +7,7 @@ import sys
 
 # Config Logging
 from statemachine.steering_command_generator import SteeringCommandGenerator
-from uart_output.uart_connector import UartConnector
+from uart_connector.uart_connector import UartConnector
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - [%(threadName)s] - %(message)s',

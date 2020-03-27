@@ -59,7 +59,7 @@ class DetectedObject:
 
     def __init__(self, object_type: DetectedObjectType, bounding_box: BoundingBox, distance: Distance,
                  probability: int,
-                 relative_objects: List[RelativeObject] = []):
+                 relative_objects: List[RelativeObject]):
         self._object_type: DetectedObjectType = object_type
         self._bounding_box: BoundingBox = bounding_box
         self._distance: Distance = distance  # nullable
@@ -116,22 +116,14 @@ class ObjectDetectorResult:
     def __init__(self, detected_objects: List[DetectedObject]):
         self._timestamp = datetime.timestamp(datetime.now())
         self._detected_objects = detected_objects
-
-    def get_most_right_pylon(self) -> DetectedObject:
-        if self.has_pylons():
-            most_right_x = 0
-            most_right_pylon = 0
-            pylons = self.get_pylons_only()
-            for pylon in pylons:
-                if most_right_x < pylon.bounding_box.shape.centroid.x:
-                    most_right_x = pylon.bounding_box.shape.centroid.x
-                    most_right_pylon = pylon
-            return most_right_pylon
-        else:
-            raise Exception(
-                f'Cannot get most right pylon, as there is no pylon! DetectedObjects are: {self._detected_objects}')
+        self.__pylons = self.get_pylons_only()
+        self.__square_timbers = self.get_square_timbers_only()
 
     def has_pylons(self) -> bool:
+        pylons = self.get_pylons_only()
+        return len(pylons) > 0
+
+    def has_square_timbers(self) -> bool:
         pylons = self.get_pylons_only()
         return len(pylons) > 0
 
@@ -139,6 +131,28 @@ class ObjectDetectorResult:
         return [detected_object for detected_object in self._detected_objects if
                 detected_object.object_type == DetectedObjectType.Pylon]
 
+    def get_square_timbers_only(self) -> List[DetectedObject]:
+        return [detected_object for detected_object in self._detected_objects if
+                detected_object.object_type == DetectedObjectType.SquareTimber]
+
+    def nearest_square_timber(self) -> DetectedObject:
+        if self.has_square_timbers():
+            square_timbers = self.get_square_timbers_only()
+            min_distance = min(self._measured_square_timber_distances_only())
+
+            nearest_square_timber = [square_timber for square_timber in square_timbers if square_timber.distance == min_distance]
+            return nearest_square_timber[0]
+
+        else:
+            raise Exception('Called nearest_square_timber, when no square timber is available!')
+
+    def _measured_square_timber_distances_only(self) -> List[float]:
+        if self.has_square_timbers():
+            measured_distances: List[float] = [square_timber.distance.value for square_timber in self.__square_timbers if
+                                               square_timber.distance.measured]
+            return measured_distances
+        else:
+            return List[float]
     @property
     def get_detected_objects(self) -> List[DetectedObject]:
         return self._detected_objects
