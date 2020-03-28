@@ -86,6 +86,10 @@ class DetectedObject:
     def bounding_box(self) -> BoundingBox:
         return self._bounding_box
 
+    @bounding_box.setter
+    def bounding_box(self, value):
+        self._bounding_box = value
+
     @property
     def distance(self) -> Distance:
         return self._distance

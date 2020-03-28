@@ -38,7 +38,7 @@ def _create_detected_objects_for_pylons(detections) -> List[DetectedObject]:
         width = detection[2][2]
         height = detection[2][3]
         bounding_box: BoundingBox = BoundingBox.of_rectangle_by_center(rectangle_center_point, width, height)
-        detected_object = DetectedObject(DetectedObjectType.Pylon, bounding_box, Distance(-1, False), probability)
+        detected_object = DetectedObject(DetectedObjectType.Pylon, bounding_box, Distance(-1, False), probability, [])
         detected_objects.append(detected_object)
     return detected_objects
 

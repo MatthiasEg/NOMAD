@@ -32,6 +32,14 @@ class BoundingBox:
         return BoundingBox(box(min_x, min_y, max_x, max_y))
 
     @staticmethod
+    def of_rectangle_by_min_point(min_point: Point, width: int, height: int) -> BoundingBox:
+        min_x = int(round(min_point.x))
+        min_y = int(round(min_point.y))
+        max_x = int(round(min_point.x + width))
+        max_y = int(round(min_point.y + height))
+        return BoundingBox(box(min_x, min_y, max_x, max_y))
+
+    @staticmethod
     def of_line(start: Point, end: Point) -> BoundingBox:
         return BoundingBox(LineString([start, end]))
 
@@ -46,6 +54,10 @@ class BoundingBox:
     @property
     def height(self):
         return self._height
+
+    @property
+    def area(self):
+        return self._shape.area
 
     def center_x(self):
         return self._center_x

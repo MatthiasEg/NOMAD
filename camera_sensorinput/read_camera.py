@@ -11,7 +11,7 @@ class ReadCamera:
     def get_frame(self):
         ret, frame_read = self.cap.read()
         frame_read = cv2.rotate(frame_read, cv2.ROTATE_90_CLOCKWISE)
-        return frame_read
+        return cv2.resize(frame_read, (832, 832), interpolation=cv2.INTER_LINEAR)
 
     def close(self):
         self.cap.release()
