@@ -65,7 +65,9 @@ class Nomad:
                 else:
                     self._logger.debug(
                         f'Most right pylon with center \'{most_right_pylon.bounding_box.center()}\' was detected to the right of the center.'
-                        f'This should actually not be possible with our orbit approach...')
+                        f'This should actually not be possible with our orbit approach.'
+                        f'Initiating fictitious pylon orbit..')
+                    self._drive_fictitious_pylon_orbit()
 
     def _process_state_PylonTargeted(self):
         """
