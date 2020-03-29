@@ -1,7 +1,3 @@
-"""
-    Read Gyro and Accelerometer by Interfacing Raspberry Pi with MPU6050 using Python
-    http://www.electronicwings.com
-"""
 # Libraries
 from smbus2 import SMBus  # import SMBus2 module since original smbus module is incompatible with python3.8
 from time import sleep
