@@ -15,10 +15,10 @@ class PylonDetectorVisualizer(Node):
 
     def cvDrawBoxes(self, pylons: List[DetectedObject], frame):
         for pylon in pylons:
-            xmin = int(pylon.bounding_box.min_x)
-            ymin = int(pylon.bounding_box.min_y)
-            xmax = int(pylon.bounding_box.max_x)
-            ymax = int(pylon.bounding_box.max_y)
+            xmin = int(pylon.bounding_box._min_x)
+            ymin = int(pylon.bounding_box._min_y)
+            xmax = int(pylon.bounding_box._max_x)
+            ymax = int(pylon.bounding_box._max_y)
             pt1 = (xmin, ymin)
             pt2 = (xmax, ymax)
             cv2.rectangle(frame, pt1, pt2, (0, 255, 0), 1)

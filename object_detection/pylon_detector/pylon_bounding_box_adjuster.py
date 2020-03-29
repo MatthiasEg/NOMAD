@@ -54,5 +54,5 @@ class PylonBoundingBoxAdjuster:
         if biggest_red_object_bounding_box is None:
             return pylon_bounding_box
 
-        return BoundingBox.of_rectangle(biggest_red_object_bounding_box.min_x, pylon_bounding_box.min_y,
-                                        biggest_red_object_bounding_box.max_x, pylon_bounding_box.max_y)
+        return BoundingBox.of_rectangle(biggest_red_object_bounding_box._min_x, pylon_bounding_box._min_y,
+                                        biggest_red_object_bounding_box._max_x, pylon_bounding_box._max_y)

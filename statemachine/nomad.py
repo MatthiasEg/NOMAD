@@ -74,6 +74,7 @@ class Nomad:
             self._slow_down()
             self.trigger(Transitions.PylonTargeted_to_TransitEndangered.name)
         else:
+            self._logger.debug("No Pylon in danger zone, transition to OrbitTargeted..")
             self.trigger(Transitions.PylonTargeted_to_OrbitTargeted.name)
 
     def _process_state_OrbitTargeted(self):
@@ -101,7 +102,8 @@ class Nomad:
         # self._correct_straight_driving_path()
 
         # 2. check for distance to pylon
-        if self._measure_distance_to_pylon(self._targeted_pylon) <= 150:
+        distance_to_pylon = self._measure_distance_to_pylon(self._targeted_pylon)
+        if distance_to_pylon <= 150:
             self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.RIGHT)
             time.sleep(
                 1)  # TODO: Need to estimate how long it takes until the quarter right curve is driven. Need to watch out for race conditions with next incoming frame!
@@ -112,7 +114,18 @@ class Nomad:
         State: OrbitEntered
         :return:
         """
-        self._drive_orbit(curve_radius_centimeters=100)
+        distance_to_pylon = self._measure_distance_to_pylon(self._targeted_pylon)
+
+        # drive orbit with radius of 1 meter or 0.5 meter depending of measured distance
+        # scan for pylon while driving, if one is detected keep driving until it is centered
+        # then drive towards pylon
+        self.trigger(Transitions.OrbitEntered_to_PylonTargeted.name)
+        # if obstacle is detected in front of nomad, goto state obstacle detected
+        self.trigger(Transitions.OrbitEntered_to_ObstacleDetected.name)
+        # if in next frames pylon to the right side is detected drive fi
+        self._drive_fictitious_pylon_orbit()
+        self.trigger(Transitions.OrbitEntered_to_DestinationPylonUnknown.name)
+        pass
 
     def _process_state_TransitEndangered(self):
         """
@@ -153,7 +166,8 @@ class Nomad:
             # we need some real good calculations to improve performance. Should be done with real world distance and not pixel distance
             if -10 < x_distance_to_center < 0:
                 self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=2, driving_direction=DrivingDirection.RIGHT)
-            else
+            else:
+                pass
         else:
             # drive to the left to center the pylon
             # we need some real good calculations to improve performance. Should be done with real world distance and not pixel distance
@@ -171,22 +185,6 @@ class Nomad:
         time.sleep(1)  # TODO: need to figure out how exactly we want to wait until the bigger radius is started. IMU Data? Encoder?
         self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=100,
                                          driving_direction=DrivingDirection.LEFT)
-
-    def _drive_orbit(self, curve_radius_centimeters: int):
-        """
-        State: OrbitEntered
-        :return:
-        """
-        # drive orbit with radius of 1 meter or 0.5 meter depending of measured distance
-        # scan for pylon while driving, if one is detected keep driving until it is centered
-        # then drive towards pylon
-        self.trigger(Transitions.OrbitEntered_to_PylonTargeted.name)
-        # if obstacle is detected in front of nomad, goto state obstacle detected
-        self.trigger(Transitions.OrbitEntered_to_ObstacleDetected.name)
-        # if in next frames pylon to the right side is detected drive fi
-        self._drive_fictitious_pylon_orbit()
-        self.trigger(Transitions.OrbitEntered_to_DestinationPylonUnknown)
-        pass
 
     def _slow_down(self):
         """

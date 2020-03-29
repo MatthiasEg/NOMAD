@@ -16,7 +16,7 @@ class DangerZone:
 
         all_pylons_left_frame_side = self._pixel_grid.filter_pylons_of_area(all_pylons, GridArea.LEFT)
 
-        left_pylons_without_targeted_pylon: List[DetectedObject] = [pylon for pylon in all_pylons_left_frame_side if pylon is not targeted_pylon]
+        left_pylons_without_targeted_pylon: List[DetectedObject] = [pylon for pylon in all_pylons_left_frame_side if pylon != targeted_pylon]
 
         left_relevant_pylons_compared_to_length_and_width: List[DetectedObject] = [pylon for pylon in left_pylons_without_targeted_pylon if
                                                                                    pylon.distance.value <= (

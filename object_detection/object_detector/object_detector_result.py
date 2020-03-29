@@ -26,6 +26,14 @@ class Distance:
     def __str__(self):
         return "Distance: [value='%s', measured='%s']" % (self._value, self._measured)
 
+    def __eq__(self, o: object) -> bool:
+        return isinstance(o, Distance) \
+               and o._measured == self._measured \
+               and o._value == self._value
+
+    def __ne__(self, o: object) -> bool:
+        return not self == o
+
 
 class RelativeObjectType(Enum):
     IN_FRONT = 0
@@ -51,6 +59,14 @@ class RelativeObject:
         return "RelativeObject: [detected_object='%s', relative_type='%s']" % (
             self._detected_object, self._relative_type)
 
+    def __eq__(self, o: object) -> bool:
+        return isinstance(o, RelativeObject) \
+               and o.detected_object == self._detected_object \
+               and o._relative_type.value == self._relative_type.value
+
+    def __ne__(self, o: object) -> bool:
+        return not self == o
+
 
 class DetectedObject:
     """
@@ -59,7 +75,7 @@ class DetectedObject:
 
     def __init__(self, object_type: DetectedObjectType, bounding_box: BoundingBox, distance: Distance,
                  probability: int,
-                 relative_objects: List[RelativeObject]):
+                 relative_objects: List[RelativeObject] = None):
         self._object_type: DetectedObjectType = object_type
         self._bounding_box: BoundingBox = bounding_box
         self._distance: Distance = distance  # nullable
@@ -67,7 +83,7 @@ class DetectedObject:
         self._relative_objects: List[RelativeObject] = relative_objects
 
     def relative_detected_objects_from_relative_type(self, relative_type: RelativeObjectType) -> List[DetectedObject]:
-        if len(list(self._relative_objects)) == 0:
+        if self.relative_objects is None or len(list(self._relative_objects)) == 0:
             empty_list: List[DetectedObject] = []
             return empty_list
         relative_objects_matching_relative_type = [relative_object for relative_object in self.relative_objects if
@@ -105,6 +121,16 @@ class DetectedObject:
     @property
     def relative_objects(self) -> List[RelativeObject]:
         return self._relative_objects
+
+    def __eq__(self, o: object) -> bool:
+        return isinstance(o, DetectedObject) \
+               and o._object_type.value == self._object_type.value \
+               and o._bounding_box == self._bounding_box \
+               and o._distance == self._distance \
+               and o._probability == self._probability
+
+    def __ne__(self, o: object) -> bool:
+        return not self == o
 
 
 def __str__(self):
@@ -157,6 +183,7 @@ class ObjectDetectorResult:
             return measured_distances
         else:
             return List[float]
+
     @property
     def get_detected_objects(self) -> List[DetectedObject]:
         return self._detected_objects

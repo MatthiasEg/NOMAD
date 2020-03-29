@@ -78,13 +78,13 @@ class SteeringCommandGenerator(Node):
             probability=83
         )
 
-        right_pylon = DetectedObject(
-            object_type=DetectedObjectType.Pylon,
-            bounding_box=BoundingBox.of_rectangle_by_center(center=Point(1800, 260), width=50, height=20),
-            distance=Distance(value=20, measured=False),
-            probability=79
-        )
-        detected_objects = [right_pylon, estimated_pylon, measured_pylon]
+        # right_pylon = DetectedObject(
+        #     object_type=DetectedObjectType.Pylon,
+        #     bounding_box=BoundingBox.of_rectangle_by_center(center=Point(1800, 260), width=50, height=20),
+        #     distance=Distance(value=20, measured=False),
+        #     probability=79
+        # )
+        detected_objects = [estimated_pylon, measured_pylon]
         object_detector_result = ObjectDetectorResult(detected_objects)
 
         return object_detector_result

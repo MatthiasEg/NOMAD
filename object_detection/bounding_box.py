@@ -12,9 +12,9 @@ class BoundingBox:
         self._center: Point = shape.centroid
         self._center_x: int = self._center.x
         self._center_y: int = self._center.y
-        self.min_x, self.min_y, self.max_x, self.max_y = self._shape.bounds
-        self._height = self.max_y - self.min_y
-        self._width = self.max_x - self.min_x
+        self._min_x, self._min_y, self._max_x, self._max_y = self._shape.bounds
+        self._height = self._max_y - self._min_y
+        self._width = self._max_x - self._min_x
 
     def intersects(self, other: BoundingBox) -> bool:
         return self._shape.intersects(other._shape)
@@ -70,3 +70,15 @@ class BoundingBox:
 
     def __str__(self):
         return str(self._shape)
+
+    def __eq__(self, o: object) -> bool:
+        return isinstance(o, BoundingBox)\
+               and o._min_x == self._min_x \
+               and o._max_x == self._max_x \
+               and o._min_y == self._min_y \
+               and o._max_y == self._max_y
+
+    def __ne__(self, o: object) -> bool:
+        return not self == o
+
+

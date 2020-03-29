@@ -84,7 +84,7 @@ class PixelGridNomad:
         return most_left_pylon
 
     def has_other_pylons_to_the_right(self, targeted_pylon: DetectedObject, pylons: List[DetectedObject]) -> bool:
-        pylons_without_targeted_pylon = [pylon for pylon in pylons if pylon is not targeted_pylon]
+        pylons_without_targeted_pylon = [pylon for pylon in pylons if pylon != targeted_pylon]
         other_pylons_to_the_right = self.filter_pylons_of_area(pylons_without_targeted_pylon, GridArea.RIGHT)
 
         return len(other_pylons_to_the_right) != 0
