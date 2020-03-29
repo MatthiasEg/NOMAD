@@ -1,13 +1,11 @@
 import logging
 import time
-from threading import Thread
-from typing import Any
 
 from communication.sender import Sender
-from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject, Distance
+from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject
 from statemachine.danger_zone import DangerZone
-from statemachine.states_nomad import States
-from statemachine.steering_command_generator_result import SteeringCommandGeneratorResult, DrivingDirection
+from statemachine.states_nomad import StatesNomad, States
+from statemachine.steering_command_generator_result import DrivingDirection
 from statemachine.steering_communicator import SteeringCommunicator
 from statemachine.transitions_nomad import Transitions
 from util.pixel_grid_nomad import PixelGridNomad, PylonSide
@@ -42,6 +40,11 @@ class Nomad:
         State: DestinationPylonUnknown
         :return:
         """
+
+        if self._check_for_square_timber_in_front(0.5):
+            self.trigger(Transitions.OrbitEntered_to_ObstacleDetected)
+            return
+
         if self._data.has_pylons():
             most_right_pylon = self._pixel_grid.get_most_right_pylon(self.data.get_pylons_only())
             if self._pixel_grid.is_pylon_in_centered_area(most_right_pylon):
@@ -55,14 +58,14 @@ class Nomad:
                     self._logger.debug(
                         f'Most right pylon with center \'{most_right_pylon.bounding_box.center()}\' was detected to the left of the center.'
                         f'Keep driving on orbit.')
+                    # Following steering command maybe not needed, as we already drive on orbit.
                     self._steering_communicator.send(velocity_meters_per_second=1,
                                                      curve_radius_centimeters=100,
                                                      driving_direction=DrivingDirection.LEFT)
                 else:
                     self._logger.debug(
                         f'Most right pylon with center \'{most_right_pylon.bounding_box.center()}\' was detected to the right of the center.'
-                        f'Keep driving on orbit.')
-                    # TODO: Handling when Pylon was detected to the right of the center
+                        f'This should actually not be possible with our orbit approach...')
 
     def _process_state_PylonTargeted(self):
         """
@@ -84,13 +87,11 @@ class Nomad:
         """
         self._logger.debug("DRIVING towards targeted pylon....")
 
-        if self.has_square_timbers_in_front_of_nomad():
-            if self.data.nearest_square_timber().distance.value < 0.5:
-                self._logger.debug('Close square timber detected. Transition to ObstacleDetected..')
-                self.trigger(Transitions.OrbitTargeted_to_ObstacleDetected)
-                return
+        if self._check_for_square_timber_in_front(distance_in_meters=0.5):
+            self.trigger(Transitions.OrbitTargeted_to_ObstacleDetected)
+            return
 
-        # Check if other pylon is available to the right of the targeted pylon
+            # Check if other pylon is available to the right of the targeted pylon
         if self._pixel_grid.has_other_pylons_to_the_right(targeted_pylon=self._targeted_pylon, pylons=self.data.get_pylons_only()):
             self._logger.debug('Found other pylons to the right, while driving towards targeted pylon.'
                                'Starting fictitious pylon orbit and start transition to DestinationPylonUnknown!')
@@ -102,30 +103,43 @@ class Nomad:
         # self._correct_straight_driving_path()
 
         # 2. check for distance to pylon
-        distance_to_pylon = self._measure_distance_to_pylon(self._targeted_pylon)
-        if distance_to_pylon <= 150:
+        distance_to_targeted_pylon = self._targeted_pylon.distance.value
+        if distance_to_targeted_pylon > 150:
+            # check next frame for distance
+            self._logger.debug(f"Targeted Pylon with distance '{distance_to_targeted_pylon}' is to far way."
+                               f" Keep driving straight towards it.")
+            return
+        elif 141 <= distance_to_targeted_pylon <= 150:
+            self._logger.debug(f"Initiating bigger orbit radius of 100cm, because distance to targeted pylon is: '{distance_to_targeted_pylon}'")
             self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.RIGHT)
-            time.sleep(
-                1)  # TODO: Need to estimate how long it takes until the quarter right curve is driven. Need to watch out for race conditions with next incoming frame!
+            time.sleep(1)  # TODO: Need to estimate how long it takes until the quarter right curve is driven. Race conditions with next frame?!
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=100, driving_direction=DrivingDirection.LEFT)
+            self.trigger(Transitions.OrbitTargeted_to_OrbitEntered.name)
+        elif 91 <= distance_to_targeted_pylon <= 100:
+            self._logger.debug(f"Initiating smaller orbit radius of 50cm, because distance to targeted pylon is: '{distance_to_targeted_pylon}'")
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.RIGHT)
+            time.sleep(1)  # TODO: Need to estimate how long it takes until the quarter right curve is driven. Race conditions with next frame?!
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.LEFT)
+            self.trigger(Transitions.OrbitTargeted_to_OrbitEntered.name)
+        else:
+            self._logger.debug(f"Distance: '{distance_to_targeted_pylon}' to targeted pylon already to small to drive correct 50cm/100cm orbits!"
+                               f" Trying to drive 50cm Orbit anyway!")
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.RIGHT)
+            time.sleep(1)  # TODO: Need to estimate how long it takes until the quarter right curve is driven. Race conditions with next frame?!
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.LEFT)
             self.trigger(Transitions.OrbitTargeted_to_OrbitEntered.name)
 
     def _process_state_OrbitEntered(self):
         """
         State: OrbitEntered
+        In this State NOMAD should already be driving with a left curve around the orbit.
+
         :return:
         """
-        distance_to_pylon = self._measure_distance_to_pylon(self._targeted_pylon)
-
-        # drive orbit with radius of 1 meter or 0.5 meter depending of measured distance
-        # scan for pylon while driving, if one is detected keep driving until it is centered
-        # then drive towards pylon
-        self.trigger(Transitions.OrbitEntered_to_PylonTargeted.name)
-        # if obstacle is detected in front of nomad, goto state obstacle detected
-        self.trigger(Transitions.OrbitEntered_to_ObstacleDetected.name)
-        # if in next frames pylon to the right side is detected drive fi
-        self._drive_fictitious_pylon_orbit()
+        # noinspection PyTypeChecker
+        self._targeted_pylon = None
+        self._logger.debug("Orbit entered. Driving on orbit..")
         self.trigger(Transitions.OrbitEntered_to_DestinationPylonUnknown.name)
-        pass
 
     def _process_state_TransitEndangered(self):
         """
@@ -140,6 +154,16 @@ class Nomad:
         :return:
         """
         self._align_horizontal_to_obstacle()
+
+    def _check_for_square_timber_in_front(self, distance_in_meters: float) -> bool:
+        if self.has_square_timbers_in_front_of_nomad():
+            if self.data.nearest_square_timber().distance.value < distance_in_meters:
+                self._logger.debug('Close square timber detected. Transition to ObstacleDetected..')
+                return True
+            else:
+                return False
+        else:
+            return False
 
     def _drive_towards_targeted_pylon_endangered(self):
         # drive towards pylon
@@ -215,9 +239,6 @@ class Nomad:
     @property
     def state(self):
         return self._state
-
-    def _measure_distance_to_pylon(self, pylon: DetectedObject) -> float:
-        return pylon.distance.value
 
     def has_square_timbers_in_front_of_nomad(self) -> bool:
         if self.data.has_square_timbers():
