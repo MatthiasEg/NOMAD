@@ -17,7 +17,7 @@ GYRO_YOUT_H = 0x45
 GYRO_ZOUT_H = 0x47
 
 
-class IMU:
+class Imu:
     # create class instance as singleton to prevent multiple I2C initialization attempts
     def __new__(cls):
         if not hasattr(cls, 'instance'):

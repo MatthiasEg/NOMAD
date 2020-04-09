@@ -1,10 +1,13 @@
 import logging
 import time
+from threading import Thread
+from typing import List
 
 from communication.sender import Sender
 from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject
+from sensors.imu import Imu
+from sensors.sonar import Sonar
 from statemachine.danger_zone import DangerZone
-from statemachine.states_nomad import StatesNomad, States
 from statemachine.steering_command_generator_result import DrivingDirection
 from statemachine.steering_communicator import SteeringCommunicator
 from statemachine.transitions_nomad import Transitions
@@ -20,6 +23,9 @@ class Nomad:
     """
     _data: ObjectDetectorResult
     _pixel_grid: PixelGridNomad = PixelGridNomad()
+    _imu: Imu = Imu()
+    _obstacle_overcome_thread: Thread
+    _sonar: Sonar = Sonar()
     _danger_zone: DangerZone = DangerZone(_pixel_grid)
     _steering_communicator: SteeringCommunicator = SteeringCommunicator()
     _state = None
@@ -78,7 +84,7 @@ class Nomad:
         self._danger_zone.evaluate_dangerous_pylons(all_pylons=self._data.get_pylons_only(), targeted_pylon=self._targeted_pylon)
         if self._danger_zone.has_dangerous_pylons():
             self._logger.debug("Pylon in Danger Zone!!! Slowing down + transition to TransitEndangered..")
-            self._slow_down()
+            self._set_velocity(0.5)
             self.trigger(Transitions.PylonTargeted_to_TransitEndangered.name)
         else:
             self._logger.debug("No Pylon in danger zone, transition to OrbitTargeted..")
@@ -179,7 +185,12 @@ class Nomad:
         State: ObstacleDetected
         :return:
         """
-        self._align_horizontal_to_obstacle()
+        # Only scenario 1 of obstacle handling is implemented for corona situation purposes
+        if not self._obstacle_overcome_thread.is_alive():
+            # Drive left curve first
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50,
+                                             driving_direction=DrivingDirection.RIGHT)
+            self.trigger(Transitions.TransitEndangered_to_DestinationPylonUnknown.name)
 
     def _update_targeted_pylon(self):
         """
@@ -226,20 +237,60 @@ class Nomad:
         :return:
         """
         self._logger.debug("Driving fictitious pylon orbit")
-        self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50,
+        pylon_orbit_speed_meters_per_second: float = 1
+        distance_to_drive_right_curve_in_meters = 0.61
+        self._steering_communicator.send(velocity_meters_per_second=pylon_orbit_speed_meters_per_second, curve_radius_centimeters=50,
                                          driving_direction=DrivingDirection.RIGHT)
-        time.sleep(1)  # TODO: need to figure out how exactly we want to wait until the bigger radius is started. IMU Data? Encoder?
-        self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=100,
+        time.sleep(distance_to_drive_right_curve_in_meters/pylon_orbit_speed_meters_per_second)
+        self._steering_communicator.send(velocity_meters_per_second=pylon_orbit_speed_meters_per_second, curve_radius_centimeters=100,
                                          driving_direction=DrivingDirection.LEFT)
 
-    def _slow_down(self):
+    def _set_velocity(self, new_velocity_meters_per_second: float):
         """
         State: ObstacleDetected
         After detecting an Obstacle Nomad should slow down to a defined speed. Only slow down if
         the max velocity is not already reached.
         :return:
         """
-        self._steering_communicator.send(velocity_meters_per_second=0.5)
+        self._steering_communicator.send(velocity_meters_per_second=new_velocity_meters_per_second)
+
+    def _get_velocity(self) -> float:
+        return self._steering_communicator.last_sent_velocity()
+
+    def before_obstacle(self):
+        """
+        Is used in 'on_enter' State 'ObstacleDetected'
+        :return:
+        """
+        self._logger.debug('Slowing down before obstacle and setting up gyro checker thread..')
+        self._set_velocity(new_velocity_meters_per_second=0.1)
+        self._obstacle_overcome_thread = Thread(target=self._check_obstacle_overcome_movement)
+        self._obstacle_overcome_thread.setDaemon(True)
+        self._obstacle_overcome_thread.start()
+
+    def _check_obstacle_overcome_movement(self):
+        self._logger.info("Gyro Thread started")
+        pitch_down_noticed: bool = False
+        pitch_up_noticed: bool = False
+
+        while pitch_down_noticed is False:
+            while pitch_up_noticed:
+                gyro_x, _, _ = self._imu.get_gyro()
+                if gyro_x >= 10:
+                    pitch_up_noticed = True
+                    self._logger.info('Pitch up noticed!')
+            gyro_x, _, _ = self._imu.get_gyro()
+            if gyro_x <= -10:
+                pitch_down_noticed = True
+                self._logger.info('Pitch down noticed!')
+
+        # Pitch up and down noticed, now check if gyro values remain stable (NOMAD in more or less straight position)
+        straight_gyro_x_values: List[float] = []
+        while len(straight_gyro_x_values) < 5:
+            gyro_x, _, _ = self._imu.get_gyro()
+            if -1.5 < gyro_x < 1.5:
+                straight_gyro_x_values.append(gyro_x)
+        self._logger.info('NOMADs x axis remained straight for 5 times. The obstacle seems to have been overcome.')
 
     def clear_danger_zone(self):
         """
@@ -247,9 +298,6 @@ class Nomad:
         :return:
         """
         self._danger_zone.reset()
-
-    def _align_horizontal_to_obstacle(self):
-        pass
 
     def _drive_straight(self, velocity: int):
         self._steering_communicator.send(velocity_meters_per_second=velocity, curve_radius_centimeters=0, driving_direction=DrivingDirection.STRAIGHT)

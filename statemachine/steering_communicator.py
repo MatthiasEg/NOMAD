@@ -13,13 +13,13 @@ class SteeringCommunicator:
                                                                                                  curve_radius_centimeters=0,
                                                                                                  driving_direction=DrivingDirection.STRAIGHT)
 
-    def send(self, velocity_meters_per_second,
+    def send(self, velocity_meters_per_second: float,
              curve_radius_centimeters: float = None,
              driving_direction: DrivingDirection = None):
         """
         Sends SteeringCommandGeneratorResult to Uart Node.
 
-        :param velocity_meters_per_second:
+        :param velocity_meters_per_second: velocity in meters per second NOMAD should achieve with this steering command
         :param curve_radius_centimeters: optional parameter - if not provided it will take the last sent radius.
         :param driving_direction: optional parameter - if not provided it will take the last sent driving direction.
         :return:
@@ -50,3 +50,6 @@ class SteeringCommunicator:
     @sender.setter
     def sender(self, new_sender: Sender):
         self._sender = new_sender
+
+    def last_sent_velocity(self) -> float:
+        return self._last_steering_command_sent.velocity_meters_per_second
