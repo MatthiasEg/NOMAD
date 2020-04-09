@@ -66,6 +66,4 @@ class ReadSonar:
         # and divide by 2, because there and back
         distance_b = (time_elapsed * 34300) / 2
 
-        GPIO.cleanup()
-
         return distance_a, distance_b
