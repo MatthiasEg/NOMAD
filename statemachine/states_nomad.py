@@ -24,7 +24,7 @@ class StatesNomad:
         State(name=States.Start.name),
         State(name=States.DestinationPylonUnknown.name),
         State(name=States.PylonTargeted.name),
-        State(name=States.TransitEndangered.name),
+        State(name=States.TransitEndangered.name, on_exit='clear_danger_zone'),
         State(name=States.ObstacleDetected.name),
         State(name=States.OrbitTargeted.name),
         State(name=States.OrbitEntered.name),

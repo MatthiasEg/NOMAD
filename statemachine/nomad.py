@@ -19,12 +19,13 @@ class Nomad:
     Which callback is executed is depending on the current state (_state) of the state machine.
     """
     _data: ObjectDetectorResult
-    _targeted_pylon: DetectedObject
     _pixel_grid: PixelGridNomad = PixelGridNomad()
     _danger_zone: DangerZone = DangerZone(_pixel_grid)
     _steering_communicator: SteeringCommunicator = SteeringCommunicator()
     _state = None
     _logger = logging.getLogger("NomadModel")
+
+    _targeted_pylon: DetectedObject
 
     def _process_state_Start(self):
         """
@@ -74,7 +75,8 @@ class Nomad:
         State: PylonTargeted
         :return:
         """
-        if self._danger_zone.is_relevant(all_pylons=self._data.get_pylons_only(), targeted_pylon=self._targeted_pylon):
+        self._danger_zone.evaluate_dangerous_pylons(all_pylons=self._data.get_pylons_only(), targeted_pylon=self._targeted_pylon)
+        if self._danger_zone.has_dangerous_pylons():
             self._logger.debug("Pylon in Danger Zone!!! Slowing down + transition to TransitEndangered..")
             self._slow_down()
             self.trigger(Transitions.PylonTargeted_to_TransitEndangered.name)
@@ -148,7 +150,29 @@ class Nomad:
         State: TransitEndangered
         :return:
         """
-        self._drive_towards_targeted_pylon_endangered()
+        self._logger.debug("DRIVING towards targeted pylon....")
+        if self._check_for_square_timber_in_front(distance_in_meters=0.5):
+            self.trigger(Transitions.OrbitTargeted_to_ObstacleDetected)
+            return
+
+        self._update_targeted_pylon()
+
+        if self._danger_zone.number_of_evaluations >= 2:
+            # not the first time we entered TransitEndangered without other states in between
+            percentage_distance_decrease = self._danger_zone.percentage_distance_decrease_between_first_and_last_evaluation()
+
+            if percentage_distance_decrease >= 0.6:
+                self._drive_fictitious_pylon_orbit()
+                self.trigger(Transitions.TransitEndangered_to_DestinationPylonUnknown.name)
+                return
+            elif self._danger_zone.number_of_evaluations > 5:
+                self._drive_fictitious_pylon_orbit()
+                self.trigger(Transitions.TransitEndangered_to_DestinationPylonUnknown.name)
+                return
+            else:
+                self._danger_zone.evaluate_dangerous_pylons(all_pylons=self.data.get_pylons_only(), targeted_pylon=self._targeted_pylon)
+        else:
+            self._danger_zone.evaluate_dangerous_pylons(all_pylons=self.data.get_pylons_only(), targeted_pylon=self._targeted_pylon)
 
     def _process_state_ObstacleDetected(self):
         """
@@ -157,8 +181,16 @@ class Nomad:
         """
         self._align_horizontal_to_obstacle()
 
+    def _update_targeted_pylon(self):
+        """
+        Update targeted pylon according to new data so make sure it's possible to find the targeted pylon in all pylons.
+        After declaring a pylon as targeted pylon, we always move straight forward. Means the targeted pylon should still remain in the center.
+        :return:
+        """
+        self._targeted_pylon = self._pixel_grid.most_centered_pylon(self.data.get_pylons_only())
+
     def _check_for_square_timber_in_front(self, distance_in_meters: float) -> bool:
-        if self.has_square_timbers_in_front_of_nomad():
+        if self.data.has_measured_square_timbers():
             if self.data.nearest_square_timber().distance.value < distance_in_meters:
                 self._logger.debug('Close square timber detected. Transition to ObstacleDetected..')
                 return True
@@ -167,21 +199,9 @@ class Nomad:
         else:
             return False
 
-    def _drive_towards_targeted_pylon_endangered(self):
-        # drive towards pylon
-        # measure distance to horizontal axis of pylon in danger zone
-        # if obstacle in front of nomad detected and distance < 0.5m
-        self.trigger(Transitions.TransitEndangered_to_ObstacleDetected.name)
-
-        # if distance to horizontal axis of pylon in danger zone <=1m do drive_fictitious_pylon_orbit
-        if False:
-            self._drive_fictitious_pylon_orbit()
-            self.trigger(Transitions.TransitEndangered_to_DestinationPylonUnknown.name)
-        pass
-
     def _correct_straight_driving_path(self):
         """
-        This method is ment to slightely adjust where NOMAD is driving, when driving towards a pylon which should
+        This method is meant to slightly adjust where NOMAD is driving, when driving towards a pylon which should
         already be centered.
         :return:
         """
@@ -221,6 +241,13 @@ class Nomad:
         """
         self._steering_communicator.send(velocity_meters_per_second=0.5)
 
+    def clear_danger_zone(self):
+        """
+        Is executed when State 'TransitEndangered' is left by transition.
+        :return:
+        """
+        self._danger_zone.reset()
+
     def _align_horizontal_to_obstacle(self):
         pass
 
@@ -241,10 +268,3 @@ class Nomad:
     @property
     def state(self):
         return self._state
-
-    def has_square_timbers_in_front_of_nomad(self) -> bool:
-        if self.data.has_square_timbers():
-            objects_on_track = [square_timber for square_timber in self.data.get_square_timbers_only() if square_timber.distance.measured]
-            return len(objects_on_track) != 0
-        else:
-            return False

@@ -165,6 +165,13 @@ class ObjectDetectorResult:
         return [detected_object for detected_object in self._detected_objects if
                 detected_object.object_type == DetectedObjectType.SquareTimber]
 
+    def has_measured_square_timbers(self) -> bool:
+        if self.has_square_timbers():
+            measured_square_timbers = [square_timber for square_timber in self.get_square_timbers_only() if square_timber.distance.measured]
+            return len(measured_square_timbers) != 0
+        else:
+            return False
+
     def nearest_square_timber(self) -> DetectedObject:
         if self.has_square_timbers():
             square_timbers = self.get_square_timbers_only()
