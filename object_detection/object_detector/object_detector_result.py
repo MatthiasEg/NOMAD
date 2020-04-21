@@ -122,6 +122,33 @@ class DetectedObject:
     def relative_objects(self) -> List[RelativeObject]:
         return self._relative_objects
 
+    def add_relative_object(self, other_detected_object: DetectedObject):
+        # handle only in_front or behind
+        if (other_detected_object.bounding_box.min_x <= self.bounding_box.min_x and
+            other_detected_object.bounding_box.max_x >= self.bounding_box.max_x) \
+                or (other_detected_object.bounding_box.min_x >= self.bounding_box.min_x and
+                    other_detected_object.bounding_box.max_x <= self.bounding_box.max_x):
+            self.relative_objects.append(RelativeObject(other_detected_object,
+                                                        self._determine_in_front_or_behind(other_detected_object)))
+        # handle left
+        elif other_detected_object.bounding_box.min_x <= self.bounding_box.min_x:
+            self.relative_objects.append(RelativeObject(other_detected_object, RelativeObjectType.LEFT))
+            self.relative_objects.append(RelativeObject(other_detected_object,
+                                                        self._determine_in_front_or_behind(other_detected_object)))
+
+        # handle right
+        elif other_detected_object.bounding_box.max_x >= self.bounding_box.max_x:
+            self.relative_objects.append(RelativeObject(other_detected_object, RelativeObjectType.RIGHT))
+            self.relative_objects.append(RelativeObject(other_detected_object,
+                                                        self._determine_in_front_or_behind(other_detected_object)))
+
+    def _determine_in_front_or_behind(self, other_detected_object: DetectedObject) -> RelativeObjectType:
+        if other_detected_object.distance.value <= self.distance.value:
+            return RelativeObjectType.IN_FRONT
+        else:
+            return RelativeObjectType.BEHIND
+
+
     def __eq__(self, o: object) -> bool:
         return isinstance(o, DetectedObject) \
                and o._object_type.value == self._object_type.value \
@@ -146,6 +173,10 @@ class ObjectDetectorResult:
     def __init__(self, detected_objects: List[DetectedObject]):
         self._timestamp = datetime.timestamp(datetime.now())
         self._detected_objects = detected_objects
+        for detected_object in detected_objects:
+            for other_detected_object in detected_objects:
+                if detected_object != other_detected_object:
+                    detected_object.add_relative_object(other_detected_object)
         self.__pylons = self.get_pylons_only()
         self.__square_timbers = self.get_square_timbers_only()
 
@@ -177,7 +208,8 @@ class ObjectDetectorResult:
             square_timbers = self.get_square_timbers_only()
             min_distance = min(self._measured_square_timber_distances_only())
 
-            nearest_square_timber = [square_timber for square_timber in square_timbers if square_timber.distance == min_distance]
+            nearest_square_timber = [square_timber for square_timber in square_timbers if
+                                     square_timber.distance == min_distance]
             return nearest_square_timber[0]
 
         else:
@@ -185,8 +217,8 @@ class ObjectDetectorResult:
 
     def _measured_square_timber_distances_only(self) -> List[float]:
         if self.has_square_timbers():
-            measured_distances: List[float] = [square_timber.distance.value for square_timber in self.__square_timbers if
-                                               square_timber.distance.measured]
+            measured_distances: List[float] = [square_timber.distance.value for square_timber in self.__square_timbers
+                                               if square_timber.distance.measured]
             return measured_distances
         else:
             return List[float]

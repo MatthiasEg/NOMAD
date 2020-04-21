@@ -1,18 +1,7 @@
-from enum import Enum
 import logging
 
-from object_detection.object_detector.object_detector_result import DetectedObject
+from object_detection.object_detector.object_detector_result import DetectedObject, Situation
 from object_detection.obstacle_detector.obstacle_detector_result import ObstacleDetectorResult
-
-
-class Situation(Enum):
-    no_object_in_front = 0
-    pylon_far_away = 1
-    only_pylon_in_front = 2
-    square_timber_in_front_of_pylon = 3
-    only_square_timber_in_front = 4
-    square_timber_behind_pylon = 5
-    ignore = 6
 
 
 class SituationAnalyzer:
@@ -24,11 +13,12 @@ class SituationAnalyzer:
         else:
             return self.analyze_without_centred_pylon(obstacle_detector_result)
 
-    def analyze_with_centred_pylon(self, centred_pylon: DetectedObject, obstacle_detector_result: ObstacleDetectorResult) \
-            -> Situation:
-        if obstacle_detector_result._contact_bottom:
-            if obstacle_detector_result._distance_top == obstacle_detector_result._distance_bottom:
-                intersecting_edge = obstacle_detector_result.get_any_edge_which_intersects(centred_pylon._bounding_box)
+    def analyze_with_centred_pylon(self, centred_pylon: DetectedObject,
+                                   obstacle_detector_result: ObstacleDetectorResult) -> Situation:
+        if obstacle_detector_result.contact_bottom:
+            if obstacle_detector_result.distance_top == obstacle_detector_result.distance_bottom:
+                intersecting_edge = obstacle_detector_result.get_any_obstacle_which_intersects(
+                    centred_pylon.bounding_box)
                 if intersecting_edge is not None:
                     self._logger.debug("Square timber behind pylon")
                     return Situation.square_timber_behind_pylon
@@ -43,8 +33,8 @@ class SituationAnalyzer:
             return Situation.pylon_far_away
 
     def analyze_without_centred_pylon(self, obstacle_detector_result: ObstacleDetectorResult) -> Situation:
-        if obstacle_detector_result._contact_bottom:
-            if obstacle_detector_result._distance_top == obstacle_detector_result._distance_bottom:
+        if obstacle_detector_result.contact_bottom:
+            if obstacle_detector_result.distance_top == obstacle_detector_result.distance_bottom:
                 self._logger.debug("Unknown Situation")
                 return Situation.ignore  # roadside use cases currently not implemented
             else:

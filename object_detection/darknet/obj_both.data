@@ -1,0 +1,5 @@
+classes=2
+train = /home/manuel/PREN/workspaces/informatik/object_detection/darknet/mixed_train.txt
+valid = /home/manuel/PREN/workspaces/informatik/object_detection/darknet/mixed_test.txt
+names = /home/manuel/PREN/workspaces/informatik/object_detection/darknet/obj_both.names
+backup = /home/manuel/PREN/workspaces/informatik/object_detection/darknet/backup/

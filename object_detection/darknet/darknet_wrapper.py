@@ -10,21 +10,21 @@ from object_detection.object_detector.object_detector_result import DetectedObje
 
 
 def _load_meta_path():
-    meta_path = "/home/manuel/PREN/workspaces/informatik/object_detection/darknet/obj.data"
+    meta_path = "/home/manuel/PREN/workspaces/informatik/object_detection/darknet/obj_both.data"
     if not os.path.exists(meta_path):
         raise ValueError("Invalid data file path `" + os.path.abspath(meta_path) + "`")
     return meta_path
 
 
 def _load_weight_path():
-    weight_path = "/home/manuel/PREN/workspaces/informatik/object_detection/darknet/yolov3-tiny_3l_5000.weights"
+    weight_path = "/home/manuel/PREN/workspaces/informatik/object_detection/darknet/weights/yolov3-tiny_3l_8000_both.weights"
     if not os.path.exists(weight_path):
         raise ValueError("Invalid weight path `" + os.path.abspath(weight_path) + "`")
     return weight_path
 
 
 def _load_config_path():
-    config_path = "/home/manuel/PREN/workspaces/informatik/object_detection/darknet/yolov3-tiny_3l.cfg"
+    config_path = "/home/manuel/PREN/workspaces/informatik/object_detection/darknet/yolov3-tiny_3l_both.cfg"
     if not os.path.exists(config_path):
         raise ValueError("Invalid config path `" + os.path.abspath(config_path) + "`")
     return config_path
@@ -33,14 +33,31 @@ def _load_config_path():
 def _create_detected_objects_for_pylons(detections) -> List[DetectedObject]:
     detected_objects = []
     for detection in detections:
-        probability: int = round(detection[1] * 100, 2)
-        rectangle_center_point: Point = Point(detection[2][0], detection[2][1])
-        width = detection[2][2]
-        height = detection[2][3]
-        bounding_box: BoundingBox = BoundingBox.of_rectangle_by_center(rectangle_center_point, width, height)
-        detected_object = DetectedObject(DetectedObjectType.Pylon, bounding_box, Distance(-1, False), probability, [])
-        detected_objects.append(detected_object)
+        if "trafficcone" == detection[0].decode():
+            probability: int = round(detection[1] * 100, 2)
+            bounding_box: BoundingBox = _create_bounding_box(detection)
+            detected_object = DetectedObject(DetectedObjectType.Pylon, bounding_box, Distance(-1, False), probability)
+            detected_objects.append(detected_object)
     return detected_objects
+
+
+def _create_detected_objects_for_obstacle(detections) -> List[DetectedObject]:
+    detected_objects = []
+    for detection in detections:
+        if "squaretimber" == detection[0].decode():
+            probability: int = round(detection[1] * 100, 2)
+            bounding_box: BoundingBox = _create_bounding_box(detection)
+            detected_object = DetectedObject(DetectedObjectType.SquareTimber, bounding_box, Distance(-1, False),
+                                             probability)
+            detected_objects.append(detected_object)
+    return detected_objects
+
+
+def _create_bounding_box(detection) -> BoundingBox:
+    rectangle_center_point: Point = Point(detection[2][0], detection[2][1])
+    width = detection[2][2]
+    height = detection[2][3]
+    return BoundingBox.of_rectangle_by_center(rectangle_center_point, width, height)
 
 
 class DarknetWrapper:
@@ -87,6 +104,11 @@ class DarknetWrapper:
         self._initialize_darknet_image(frame)
         detections = darknet.detect_image(self._net_main, self._meta_main, self._darknet_image, thresh=0.25)
         return _create_detected_objects_for_pylons(detections)
+
+    def detect_obstacles(self, frame) -> List[DetectedObject]:
+        self._initialize_darknet_image(frame)
+        detections = darknet.detect_image(self._net_main, self._meta_main, self._darknet_image, thresh=0.25)
+        return _create_detected_objects_for_obstacle(detections)
 
     def _initialize_darknet_image(self, frame):
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

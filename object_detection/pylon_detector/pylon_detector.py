@@ -25,10 +25,9 @@ class PylonDetector(Node):
 
     def _progress(self):
         frame_read = self._sensor_input_camera.get_frame()
-        pylon_bounding_box_adjuster = PylonBoundingBoxAdjuster(frame_read)
         detected_pylons: List[DetectedObject] = self._darknet_wrapper.detect_pylons(frame_read)
         for detected_pylon in detected_pylons:
-            detected_pylon.bounding_box = pylon_bounding_box_adjuster.adjust(detected_pylon.bounding_box)
+            #detected_pylon.bounding_box = PylonBoundingBoxAdjuster(frame_read).adjust(detected_pylon.bounding_box)
             detected_pylon.distance = self._pylon_distance_estimator.estimate(detected_pylon.bounding_box.width)
         self._pylon_detector_sender.send(PylonDetectorResult(detected_pylons))
 

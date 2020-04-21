@@ -13,11 +13,16 @@ class PylonDetectorResult:
     def pylons(self) -> List[DetectedObject]:
         return self._pylons
 
-    def get_any_pylon_which_intersects(self, bounding_box: BoundingBox) -> Optional[DetectedObject]:
-        for pylon in self._pylons:
-            if pylon.bounding_box.intersects(bounding_box):
-                return pylon
-        return None
+    def get_nearest_pylon_which_intersects(self, bounding_box: BoundingBox) -> Optional[DetectedObject]:
+        pylons_which_intersects = [pylon for pylon in self._pylons if pylon.bounding_box.intersects(bounding_box)]
+        if len(pylons_which_intersects) > 0:
+            nearest_pylon = pylons_which_intersects[0]
+            for pylon in pylons_which_intersects:
+                if pylon.distance.value < nearest_pylon.distance.value:
+                    nearest_pylon = pylon
+            return nearest_pylon
+        else:
+            return None
 
     def __str__(self):
         pylon_string_representation = ""

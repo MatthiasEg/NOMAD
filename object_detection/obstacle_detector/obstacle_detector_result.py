@@ -1,38 +1,25 @@
-from shapely.geometry import Point
 from typing import List, Optional
 from object_detection.bounding_box import BoundingBox
-
-
-class Edge:
-
-    def __init__(self, start: Point, end: Point):
-        self.bounding_box = BoundingBox.of_line(start, end)
-
-    def __str__(self):
-        return str(self.bounding_box)
+from object_detection.object_detector.object_detector_result import DetectedObject
 
 
 class ObstacleDetectorResult:
 
-    def __init__(self, contact_top: bool, distance_top: float, contact_bottom: bool, distance_bottom: float,
-                 edges: List[Edge]):
-        self._contact_top = contact_top
-        self._distance_top = distance_top
-        self._contact_bottom = contact_bottom
-        self._distance_bottom = distance_bottom
-        self._edges = edges
+    def __init__(self, obstacles: List[DetectedObject]):
+        self._obstacles = obstacles
 
-    def get_any_edge_which_intersects(self, bounding_box: BoundingBox) -> Optional[Edge]:
-        for edge in self._edges:
-            if edge.bounding_box.intersects(bounding_box):
-                return edge
+    @property
+    def obstacles(self) -> List[DetectedObject]:
+        return self._obstacles
+
+    def get_any_obstacle_which_intersects(self, bounding_box: BoundingBox) -> Optional[DetectedObject]:
+        for obstacle in self._obstacles:
+            if obstacle.bounding_box.intersects(bounding_box):
+                return obstacle
         return None
 
     def __str__(self):
-        edges_string_representation = ""
-        for edge in self._edges:
-            edges_string_representation += str(edge)
-        return "ObstacleDetectorResult: [contact_top='%s', distance_top='%s', contact_bottom='%s', " \
-               "distance_bottom='%s', edges_string_representation='%s']" % \
-               (self._contact_top, self._distance_top, self._contact_bottom, self._distance_bottom,
-                edges_string_representation)
+        obstacle_string_representation = ""
+        for obstacle in self.obstacles:
+            obstacle_string_representation += str(obstacle)
+        return "ObstacleDetectorResult: [edges_string_representation='%s']" % obstacle_string_representation
