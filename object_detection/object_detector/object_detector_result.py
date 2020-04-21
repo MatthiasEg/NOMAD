@@ -75,7 +75,7 @@ class DetectedObject:
 
     def __init__(self, object_type: DetectedObjectType, bounding_box: BoundingBox, distance: Distance,
                  probability: int,
-                 relative_objects: List[RelativeObject] = None):
+                 relative_objects: List[RelativeObject] = []):
         self._object_type: DetectedObjectType = object_type
         self._bounding_box: BoundingBox = bounding_box
         self._distance: Distance = distance  # nullable

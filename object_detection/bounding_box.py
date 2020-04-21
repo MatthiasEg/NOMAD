@@ -59,6 +59,22 @@ class BoundingBox:
     def area(self):
         return self._shape.area
 
+    @property
+    def max_y(self):
+        return self._max_y
+
+    @property
+    def max_x(self):
+        return self._max_x
+
+    @property
+    def min_y(self):
+        return self._min_y
+
+    @property
+    def min_x(self):
+        return self._min_x
+
     def center_x(self):
         return self._center_x
 

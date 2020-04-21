@@ -1,6 +1,7 @@
 import logging
 
-from object_detection.object_detector.object_detector_result import DetectedObject, Situation
+from object_detection.object_detector.object_detector_result import DetectedObject
+from object_detection.object_detector.situation import Situation
 from object_detection.obstacle_detector.obstacle_detector_result import ObstacleDetectorResult
 
 

@@ -11,7 +11,6 @@ from communication.sender import Sender
 from object_detection.bounding_box import BoundingBox
 from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject, \
     DetectedObjectType, Distance, RelativeObject, RelativeObjectType
-from statemachine.nomad import Nomad
 from statemachine.states_nomad import StatesNomad
 from statemachine.transitions_nomad import TransitionsNomad
 

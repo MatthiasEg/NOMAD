@@ -3,8 +3,8 @@ from typing import List
 from communication.receiver import Receiver
 from communication.sender import Sender
 from object_detection.bounding_box import BoundingBox
-from object_detection.object_detector.object_detector_result import DetectedObject, RelativeObject, RelativeObjectType, \
-    ObjectDetectorResult, Situation, Distance
+from object_detection.object_detector.object_detector_result import ObjectDetectorResult, Distance
+from object_detection.object_detector.situation import Situation
 from object_detection.object_detector.situation_analyzer import SituationAnalyzer
 from communication.node import Node
 import configparser
@@ -34,8 +34,7 @@ class ObjectDetector(Node):
         #centred_pylon = pylon_detector_result.get_nearest_pylon_which_intersects(self._camera_center_range)
         #current_situation = self._situation_analyzer.analyze(centred_pylon, obstacle_detector_result)
         self._set_measured_distance(obstacle_detector_result, pylon_detector_result)
-        self._object_detector_sender.send(ObjectDetectorResult(Situation.no_object_in_front,
-                                                               pylon_detector_result.pylons +
+        self._object_detector_sender.send(ObjectDetectorResult(pylon_detector_result.pylons +
                                                                obstacle_detector_result.obstacles))
 
     def _set_measured_distance(self, obstacle_detector_result: ObstacleDetectorResult, pylon_detector_result: PylonDetectorResult):

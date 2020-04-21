@@ -114,7 +114,7 @@ class ObjectDetectorVisualizer(Node):
         # frame_threshed_red = cv2.dilate(frame_threshed_red, kernel, iterations=5)
         # frame_threshed_red = cv2.bitwise_not(frame_threshed_red)
 
-        draw_detected_objects(frame_read, object_detector_result.detected_objects)
+        draw_detected_objects(frame_read, object_detector_result.get_detected_objects)
 
         # draw camera center range on image
         camera_center_range = ObjectDetector.load_camera_center_range()
