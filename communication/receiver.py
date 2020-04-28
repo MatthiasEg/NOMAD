@@ -18,8 +18,7 @@ class Receiver:
         self._logger = logging.getLogger(node_config_section + "_RECEIVER")
 
     def _open_subscribe_socket(self):
-        self._socket = zmq.Context().socket(zmq.SUB)
-        self._socket.setsockopt_string(zmq.SUBSCRIBE, "")
+        self._socket = zmq.Context().socket(zmq.PULL)
         self._socket.connect("tcp://%s:%s" % (self._host, self._port))
         self._logger.info("connect to host: tcp://%s:%s" % (self._host, self._port))
 

@@ -18,7 +18,7 @@ class Sender:
         self._logger = logging.getLogger(node_config_section + "_SENDER")
 
     def _open_publish_socket(self):
-        self._socket = zmq.Context().socket(zmq.PUB)  # pylint: disable=no-member
+        self._socket = zmq.Context().socket(zmq.PUSH)  # pylint: disable=no-member
         self._socket.bind("tcp://%s:%s" % (self._host, self._port))
         self._logger.info("bind to host: tcp://%s:%s" % (self._host, self._port))
 
