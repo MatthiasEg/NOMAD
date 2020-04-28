@@ -1,5 +1,7 @@
 import cv2
 
+from camera_sensorinput.fake_data_reader import FakeDataReader
+
 
 class SonarData:
 
@@ -28,8 +30,14 @@ class SonarData:
 
 class ReadSonar:
 
+    def __init__(self):
+        self.fake_data_reader: FakeDataReader = FakeDataReader("sonardata")
+
     def get_Data(self) -> SonarData:
-        return SonarData(False, 4.0, True, 2.0)
+        file_path = self.fake_data_reader.getNextFilePath()
+        file = open(file_path, "r")
+        values = file.readline().replace(',', '').split(' ')
+        return SonarData(False, float(values[0]), True, float(values[1]))
 
     def close(self):
         self.cap.release()

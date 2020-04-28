@@ -1,6 +1,6 @@
 from typing import List
 
-from camera_sensorinput.read_camera import ReadCamera
+from camera_sensorinput.read_fake_camera import ReadCamera
 from communication.sender import Sender
 from communication.node import Node
 from object_detection.darknet.darknet_wrapper import DarknetWrapper

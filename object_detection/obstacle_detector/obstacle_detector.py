@@ -1,5 +1,5 @@
 from typing import List
-from camera_sensorinput.read_camera import ReadCamera
+from camera_sensorinput.read_fake_camera import ReadCamera
 from object_detection.darknet.darknet_wrapper import DarknetWrapper
 from object_detection.object_detector.object_detector_result import DetectedObject
 from object_detection.obstacle_detector.obstacle_detector_result import ObstacleDetectorResult

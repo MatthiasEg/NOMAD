@@ -2,13 +2,15 @@ from typing import List
 
 from cv2 import cv2
 
-from camera_sensorinput.read_camera import ReadCamera
+from camera_sensorinput.read_fake_camera import ReadCamera
 from communication.receiver import Receiver
 from communication.node import Node
 from object_detection.object_detector.object_detector import ObjectDetector
 from object_detection.object_detector.object_detector_result import DetectedObject, DetectedObjectType, \
     RelativeObjectType
 import numpy as np
+
+from sonar_sensorinput.read_fake_sonar import ReadSonar, SonarData
 
 
 def draw_detected_objects(frame, detected_objects: List[DetectedObject]):
@@ -97,11 +99,12 @@ class ObjectDetectorVisualizer(Node):
 
     def _start_up(self):
         self._object_detector_receiver = Receiver("OBJECT_DETECTOR")
+        self._fake_sonar = ReadSonar()
 
     def _progress(self):
         frame_read = self._sensor_input_camera.get_frame()
         object_detector_result = self._object_detector_receiver.receive()
-
+        sonar_data: SonarData = self._fake_sonar.get_Data()
         # hsv_img = cv2.cvtColor(frame_read, cv2.COLOR_BGR2HSV)
         # hsv_img = median = cv2.medianBlur(hsv_img, 5)
         # frame_threshed1 = cv2.inRange(hsv_img, self._LOWER_RED_MIN, self._LOWER_RED_MAX)
@@ -120,14 +123,14 @@ class ObjectDetectorVisualizer(Node):
         camera_center_range = ObjectDetector.load_camera_center_range()
         min_point = (int(camera_center_range.min_x), int(camera_center_range.min_y))
         max_point = (int(camera_center_range.max_x), int(camera_center_range.max_y))
-        cv2.rectangle(frame_read, min_point, max_point, (255, 0, 0), 1)
+        #cv2.rectangle(frame_read, min_point, max_point, (255, 0, 0), 1)
 
         # draw ultrasonic information
-        cv2.putText(frame_read, "Ultrasonic Top: ", (int(camera_center_range.max_x) + 30,
+        cv2.putText(frame_read, "Ultrasonic Top: " + str(sonar_data.distance_top), (int(camera_center_range.max_x) + 30,
                                                      int(camera_center_range.max_y) - 30),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5, [255, 0, 0], 2)
-        cv2.putText(frame_read, "Ultrasonic Bottom: ", (int(camera_center_range.max_x) + 30,
+        cv2.putText(frame_read, "Ultrasonic Bottom: " + str(sonar_data.distance_bottom), (int(camera_center_range.max_x) + 30,
                                                         int(camera_center_range.max_y) - 15),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5, [255, 0, 0], 2)
