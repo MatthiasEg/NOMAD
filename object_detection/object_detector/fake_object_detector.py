@@ -19,7 +19,6 @@ class FakeObjectDetector(Node):
 
     def _progress(self):
         pickle_in = open(self.fake_data_reader.getNextFilePath(), "rb")
-        print("d")
         object_detector_result: ObjectDetectorResult = pickle.load(pickle_in)
         self._object_detector_sender.send(object_detector_result)
 

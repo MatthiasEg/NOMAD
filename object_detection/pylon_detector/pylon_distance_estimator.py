@@ -5,7 +5,7 @@ from object_detection.object_detector.object_detector_result import Distance
 
 class PylonDistanceEstimator:
     _logger = logging.getLogger("PylonDistanceEstimator")
-    _FOCAL_LENGTH = 405  # manually calculate with example images
+    _FOCAL_LENGTH = 14804.4  # manually calculate with example images
 
     def __init__(self):
         self._load_configuration()

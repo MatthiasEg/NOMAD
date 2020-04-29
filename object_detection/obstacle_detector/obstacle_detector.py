@@ -26,6 +26,7 @@ class ObstacleDetector(Node):
         detected_obstacles: List[DetectedObject] = self._darknet_wrapper.detect_obstacles(frame_read)
         for detected_obstacle in detected_obstacles:
             detected_obstacle.distance = self._obstacle_distance_estimator.estimate(detected_obstacle.bounding_box.height)
+
         obstacle_detector_result = ObstacleDetectorResult(detected_obstacles)
         self._obstacle_detector_sender.send(obstacle_detector_result)
 

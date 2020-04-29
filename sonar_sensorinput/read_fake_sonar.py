@@ -37,7 +37,9 @@ class ReadSonar:
         file_path = self.fake_data_reader.getNextFilePath()
         file = open(file_path, "r")
         values = file.readline().replace(',', '').split(' ')
-        return SonarData(False, float(values[0]), True, float(values[1]))
+        contact_top = float(values[0]) < 500
+        contact_bottom = float(values[1]) < 500
+        return SonarData(contact_top, float(values[0]), contact_bottom, float(values[1]))
 
     def close(self):
         self.cap.release()

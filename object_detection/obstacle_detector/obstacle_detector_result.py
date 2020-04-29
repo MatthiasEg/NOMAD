@@ -12,11 +12,13 @@ class ObstacleDetectorResult:
     def obstacles(self) -> List[DetectedObject]:
         return self._obstacles
 
-    def get_any_obstacle_which_intersects(self, bounding_box: BoundingBox) -> Optional[DetectedObject]:
+    def get_nearest_obstacle_which_intersects(self, bounding_box: BoundingBox) -> Optional[DetectedObject]:
+        nearest_obstacle: Optional[DetectedObject] = None
         for obstacle in self._obstacles:
             if obstacle.bounding_box.intersects(bounding_box):
-                return obstacle
-        return None
+                if nearest_obstacle is None or obstacle.distance.value < nearest_obstacle.distance.value:
+                    nearest_obstacle = obstacle
+        return nearest_obstacle
 
     def __str__(self):
         obstacle_string_representation = ""

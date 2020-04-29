@@ -24,7 +24,7 @@ class Distance:
         return self._measured
 
     def __str__(self):
-        return "Distance: [value='%s', measured='%s']" % (self._value, self._measured)
+        return "Distance: [val='%.2f', measured='%s']" % (self._value, self._measured)
 
     def __eq__(self, o: object) -> bool:
         return isinstance(o, Distance) \

@@ -2,9 +2,12 @@ from typing import List
 
 from cv2 import cv2
 
+import cv2
+import numpy as np
 from camera_sensorinput.read_fake_camera import ReadCamera
 from communication.receiver import Receiver
 from communication.node import Node
+from imu_sensorinput.read_fake_imu import ReadIMU, IMUData
 from object_detection.object_detector.object_detector import ObjectDetector
 from object_detection.object_detector.object_detector_result import DetectedObject, DetectedObjectType, \
     RelativeObjectType
@@ -18,7 +21,9 @@ def draw_detected_objects(frame, detected_objects: List[DetectedObject]):
                 0.5, [0, 0, 255], 2)
 
     for detected_object in detected_objects:
-        if detected_object.object_type == DetectedObjectType.SquareTimber:
+        if detected_object.distance.measured:
+            color = [255, 0, 0]
+        elif detected_object.object_type == DetectedObjectType.SquareTimber:
             color = [255, 0, 255]
         else:
             color = [0, 255, 0]
@@ -30,6 +35,7 @@ def draw_detected_objects(frame, detected_objects: List[DetectedObject]):
         cv2.putText(frame, _determine_object_type_string_representation(detected_object.object_type),
                     (min_point[0], min_point[1] - 45), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
                     color, 2)
+
         cv2.putText(frame, str(detected_object.distance), (min_point[0], min_point[1] - 25), cv2.FONT_HERSHEY_SIMPLEX,
                     0.5, color, 2)
         cv2.putText(frame, "Probability [" + str(detected_object.probability) + "]", (min_point[0], min_point[1] - 5),
@@ -100,22 +106,13 @@ class ObjectDetectorVisualizer(Node):
     def _start_up(self):
         self._object_detector_receiver = Receiver("OBJECT_DETECTOR")
         self._fake_sonar = ReadSonar()
+        self._fake_imu = ReadIMU()
 
     def _progress(self):
         frame_read = self._sensor_input_camera.get_frame()
         object_detector_result = self._object_detector_receiver.receive()
         sonar_data: SonarData = self._fake_sonar.get_Data()
-        # hsv_img = cv2.cvtColor(frame_read, cv2.COLOR_BGR2HSV)
-        # hsv_img = median = cv2.medianBlur(hsv_img, 5)
-        # frame_threshed1 = cv2.inRange(hsv_img, self._LOWER_RED_MIN, self._LOWER_RED_MAX)
-        # frame_threshed2 = cv2.inRange(hsv_img, self._UPPER_RED_MIN, self._UPPER_RED_MAX)
-        # frame_threshed_red = cv2.bitwise_or(frame_threshed1, frame_threshed2)
-
-        # close gaps in red objects
-        # kernel = np.ones((5, 5), np.uint8)
-        # frame_threshed_red = cv2.erode(frame_threshed_red, kernel, iterations=2)
-        # frame_threshed_red = cv2.dilate(frame_threshed_red, kernel, iterations=5)
-        # frame_threshed_red = cv2.bitwise_not(frame_threshed_red)
+        imu_data: IMUData = self._fake_imu.get_Data()
 
         draw_detected_objects(frame_read, object_detector_result.get_detected_objects)
 
@@ -123,15 +120,49 @@ class ObjectDetectorVisualizer(Node):
         camera_center_range = ObjectDetector.load_camera_center_range()
         min_point = (int(camera_center_range.min_x), int(camera_center_range.min_y))
         max_point = (int(camera_center_range.max_x), int(camera_center_range.max_y))
-        #cv2.rectangle(frame_read, min_point, max_point, (255, 0, 0), 1)
+        # cv2.rectangle(frame_read, min_point, max_point, (255, 0, 0), 1)
 
         # draw ultrasonic information
-        cv2.putText(frame_read, "Ultrasonic Top: " + str(sonar_data.distance_top), (int(camera_center_range.max_x) + 30,
-                                                     int(camera_center_range.max_y) - 30),
+        cv2.putText(frame_read, "Ultrasonic Top: " + str(sonar_data.distance_top),
+                    (int(camera_center_range.max_x) - 200,
+                     int(camera_center_range.max_y) - 30),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5, [255, 0, 0], 2)
-        cv2.putText(frame_read, "Ultrasonic Bottom: " + str(sonar_data.distance_bottom), (int(camera_center_range.max_x) + 30,
-                                                        int(camera_center_range.max_y) - 15),
+        cv2.putText(frame_read, "Ultrasonic Bottom: " + str(sonar_data.distance_bottom),
+                    (int(camera_center_range.max_x) - 200,
+                     int(camera_center_range.max_y) - 15),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, [255, 0, 0], 2)
+
+        # draw imu information
+        cv2.putText(frame_read, "Accel x: " + str(imu_data.acc_x),
+                    (int(camera_center_range.max_x) - 200,
+                     int(camera_center_range.max_y) - 120),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, [255, 0, 0], 2)
+        cv2.putText(frame_read, "Accel y: " + str(imu_data.acc_y),
+                    (int(camera_center_range.max_x) - 200,
+                     int(camera_center_range.max_y) - 105),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, [255, 0, 0], 2)
+        cv2.putText(frame_read, "Accel z: " + str(imu_data.acc_z),
+                    (int(camera_center_range.max_x) - 200,
+                     int(camera_center_range.max_y) - 90),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, [255, 0, 0], 2)
+        cv2.putText(frame_read, "Gyro x: " + str(imu_data.gyro_x),
+                    (int(camera_center_range.max_x) - 200,
+                     int(camera_center_range.max_y) - 75),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, [255, 0, 0], 2)
+        cv2.putText(frame_read, "Gyro y: " + str(imu_data.gyro_y),
+                    (int(camera_center_range.max_x) - 200,
+                     int(camera_center_range.max_y) - 60),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, [255, 0, 0], 2)
+        cv2.putText(frame_read, "Gyro z: " + str(imu_data.gyro_z),
+                    (int(camera_center_range.max_x) - 200,
+                     int(camera_center_range.max_y) - 45),
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5, [255, 0, 0], 2)
 

@@ -17,7 +17,7 @@ def _load_meta_path():
 
 
 def _load_weight_path():
-    weight_path = "/home/manuel/PREN/workspaces/informatik/object_detection/darknet/weights/yolov3-tiny_3l_8000_both.weights"
+    weight_path = "/home/manuel/PREN/workspaces/informatik/object_detection/darknet/weights/yolov3-tiny_3l_7000_final.weights"
     if not os.path.exists(weight_path):
         raise ValueError("Invalid weight path `" + os.path.abspath(weight_path) + "`")
     return weight_path
