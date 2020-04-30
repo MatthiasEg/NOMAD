@@ -3,7 +3,8 @@ from typing import List
 from communication.receiver import Receiver
 from communication.sender import Sender
 from object_detection.bounding_box import BoundingBox
-from object_detection.object_detector.object_detector_result import ObjectDetectorResult, Distance
+from object_detection.object_detector.object_detector_result import ObjectDetectorResult, Distance, DetectedObject, \
+    DetectedObjectType
 from communication.node import Node
 import configparser
 
@@ -41,6 +42,9 @@ class ObjectDetector(Node):
             centred_obstacle = obstacle_detector_result.get_nearest_obstacle_which_intersects(self._camera_center_range)
             if centred_obstacle is not None:
                 centred_obstacle.distance = Distance(sonar_data.distance_bottom, True)
+            else:
+                obstacle_detector_result.obstacles.append(self.generateAdditionalObstacle(sonar_data.distance_bottom))
+
         elif sonar_data.contact_top and sonar_data.contact_bottom:  # pylon or pylon and square timber
             if sonar_data.distance_top + 5 >= sonar_data.distance_bottom >= sonar_data.distance_top - 15:  # pylon
                 centred_pylon = pylon_detector_result.get_nearest_pylon_which_intersects(self._camera_center_range)
@@ -54,6 +58,15 @@ class ObjectDetector(Node):
                     self._camera_center_range)
                 if centred_obstacle is not None:
                     centred_obstacle.distance = Distance(sonar_data.distance_bottom, True)
+                else:
+                    obstacle_detector_result.obstacles.append(self.generateAdditionalObstacle(sonar_data.distance_bottom))
+
+    def generateAdditionalObstacle(self, distance_buttom: float) -> DetectedObject:
+        min_y = int(832 - 1.22 * distance_buttom)
+        max_y = int(832 - 1.22 * distance_buttom+ 40)
+        bounding_box: BoundingBox = BoundingBox.of_rectangle(int(0), min_y, int(832), max_y)
+        distance: Distance = Distance(distance_buttom, True)
+        return DetectedObject(DetectedObjectType.SquareTimber, bounding_box, distance, 100, [])
 
     def _shut_down(self):
         self._pylon_detector_receiver.close()
