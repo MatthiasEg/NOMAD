@@ -148,7 +148,6 @@ class DetectedObject:
         else:
             return RelativeObjectType.BEHIND
 
-
     def __eq__(self, o: object) -> bool:
         return isinstance(o, DetectedObject) \
                and o._object_type.value == self._object_type.value \
@@ -159,14 +158,13 @@ class DetectedObject:
     def __ne__(self, o: object) -> bool:
         return not self == o
 
-
-def __str__(self):
-    relative_objects_string_representation = ""
-    for relative_object in self._relative_objects:
-        relative_objects_string_representation += str(relative_object)
-    return "DetectedObject: [type='%s', boundingBox='%s', distance='%s', " \
-           "relative_objects_string_representation='%s']" % \
-           (self._object_type, self._bounding_box, self._distance, relative_objects_string_representation)
+    def __str__(self):
+        relative_objects_string_representation = ""
+        for relative_object in self._relative_objects:
+            relative_objects_string_representation += str(relative_object)
+        return "DetectedObject: [type='%s', boundingBox='%s', distance='%s', " \
+               "relative_objects_string_representation='%s']" % \
+               (self._object_type, self._bounding_box, self._distance, relative_objects_string_representation)
 
 
 class ObjectDetectorResult:
