@@ -36,7 +36,7 @@ def _create_detected_objects_for_pylons(detections) -> List[DetectedObject]:
         if "trafficcone" == detection[0].decode():
             probability: int = round(detection[1] * 100, 2)
             bounding_box: BoundingBox = _create_bounding_box(detection)
-            detected_object = DetectedObject(DetectedObjectType.Pylon, bounding_box, Distance(-1, False), probability)
+            detected_object = DetectedObject(DetectedObjectType.Pylon, bounding_box, Distance(-1, False), probability, [])
             detected_objects.append(detected_object)
     return detected_objects
 
@@ -48,7 +48,7 @@ def _create_detected_objects_for_obstacle(detections) -> List[DetectedObject]:
             probability: int = round(detection[1] * 100, 2)
             bounding_box: BoundingBox = _create_bounding_box(detection)
             detected_object = DetectedObject(DetectedObjectType.SquareTimber, bounding_box, Distance(-1, False),
-                                             probability)
+                                             probability, [])
             detected_objects.append(detected_object)
     return detected_objects
 
