@@ -5,7 +5,7 @@ import string
 class FakeDataReader:
 
     def __init__(self, fileSuffix: string):
-        self._dataPath = "/home/manuel/PREN/workspaces/informatik/object_detection/darknet/fakedata"
+        self._dataPath = "./object_detection/darknet/fakedata"
         self._timestamps = []
         self._counter = 0
         self._fileSuffix = fileSuffix
