@@ -26,13 +26,13 @@ class PylonSide(Enum):
 
 
 class Resolution(Enum):
-    WIDTH = 1920
-    HEIGHT = 1080
+    WIDTH = 832
+    HEIGHT = 832
 
 
 class PixelGridNomad:
-    _x: int = 1920
-    _y: int = 1080
+    _x: int = 832
+    _y: int = 832
     _center_x: int = _x / 2
     _center_y: int = _y / 2
     _x_center_width = 80

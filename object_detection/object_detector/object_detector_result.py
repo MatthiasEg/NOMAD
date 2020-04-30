@@ -56,8 +56,8 @@ class RelativeObject:
         return self._relative_type
 
     def __str__(self):
-        return "RelativeObject: [detected_object='%s', relative_type='%s']" % (
-            self._detected_object, self._relative_type)
+        return "RelativeObject: [relative_type='%s']" % (
+            self._relative_type)
 
     def __eq__(self, o: object) -> bool:
         return isinstance(o, RelativeObject) \
@@ -75,7 +75,7 @@ class DetectedObject:
 
     def __init__(self, object_type: DetectedObjectType, bounding_box: BoundingBox, distance: Distance,
                  probability: int,
-                 relative_objects: List[RelativeObject] = []):
+                 relative_objects: List[RelativeObject]):
         self._object_type: DetectedObjectType = object_type
         self._bounding_box: BoundingBox = bounding_box
         self._distance: Distance = distance  # nullable
@@ -148,7 +148,6 @@ class DetectedObject:
         else:
             return RelativeObjectType.BEHIND
 
-
     def __eq__(self, o: object) -> bool:
         return isinstance(o, DetectedObject) \
                and o._object_type.value == self._object_type.value \
@@ -159,14 +158,13 @@ class DetectedObject:
     def __ne__(self, o: object) -> bool:
         return not self == o
 
-
-def __str__(self):
-    relative_objects_string_representation = ""
-    for relative_object in self._relative_objects:
-        relative_objects_string_representation += str(relative_object)
-    return "DetectedObject: [type='%s', boundingBox='%s', distance='%s', " \
-           "relative_objects_string_representation='%s']" % \
-           (self._object_type, self._bounding_box, self._distance, relative_objects_string_representation)
+    def __str__(self):
+        relative_objects_string_representation = ""
+        for relative_object in self._relative_objects:
+            relative_objects_string_representation += str(relative_object)
+        return "DetectedObject: [type='%s', boundingBox='%s', distance='%s', " \
+               "relative_objects_string_representation='%s']" % \
+               (self._object_type, self._bounding_box, self._distance, relative_objects_string_representation)
 
 
 class ObjectDetectorResult:
@@ -185,8 +183,8 @@ class ObjectDetectorResult:
         return len(pylons) > 0
 
     def has_square_timbers(self) -> bool:
-        pylons = self.get_pylons_only()
-        return len(pylons) > 0
+        square_timbers = self.get_square_timbers_only()
+        return len(square_timbers) > 0
 
     def get_pylons_only(self) -> List[DetectedObject]:
         return [detected_object for detected_object in self._detected_objects if
@@ -206,22 +204,16 @@ class ObjectDetectorResult:
     def nearest_square_timber(self) -> DetectedObject:
         if self.has_square_timbers():
             square_timbers = self.get_square_timbers_only()
-            min_distance = min(self._measured_square_timber_distances_only())
+            measured_distances: List[float] = [square_timber.distance.value for square_timber in square_timbers
+                                               if square_timber.distance.measured]
+            min_distance = min(measured_distances)
 
             nearest_square_timber = [square_timber for square_timber in square_timbers if
-                                     square_timber.distance == min_distance]
+                                     square_timber.distance.value == min_distance]
             return nearest_square_timber[0]
 
         else:
             raise Exception('Called nearest_square_timber, when no square timber is available!')
-
-    def _measured_square_timber_distances_only(self) -> List[float]:
-        if self.has_square_timbers():
-            measured_distances: List[float] = [square_timber.distance.value for square_timber in self.__square_timbers
-                                               if square_timber.distance.measured]
-            return measured_distances
-        else:
-            return List[float]
 
     @property
     def get_detected_objects(self) -> List[DetectedObject]:
