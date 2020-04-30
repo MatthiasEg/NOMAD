@@ -14,7 +14,7 @@ class SteeringCommandGeneratorResult:
     Results of the SteeringCommandGenerator which are being sent to the uart node
     """
 
-    def __init__(self, velocity_meters_per_second: float, curve_radius_centimeters: float, driving_direction: DrivingDirection) -> None:
+    def __init__(self, velocity_meters_per_second: float, curve_radius_centimeters: float, driving_direction: DrivingDirection, state_nomad) -> None:
         """
         :param velocity_meters_per_second:
         :param curve_radius_centimeters: determines the radius NOMAD needs to drive
@@ -26,11 +26,16 @@ class SteeringCommandGeneratorResult:
         self._driving_direction: DrivingDirection = driving_direction
         self._velocity_meters_per_second = velocity_meters_per_second
         self._curve_radius_centimeters = curve_radius_centimeters
+        self._state = state_nomad
 
         if driving_direction == DrivingDirection.LEFT:
             curve_radius_centimeters = curve_radius_centimeters * (-1)
         self._steering_angel = 0 if curve_radius_centimeters == DrivingDirection.STRAIGHT.value else self._convert_radius_to_steering_angel(
             curve_radius_centimeters=curve_radius_centimeters)
+
+    @property
+    def state(self):
+        return self._state
 
     @property
     def velocity_meters_per_second(self):
@@ -54,4 +59,8 @@ class SteeringCommandGeneratorResult:
         return converter.convert(curve_radius_centimeters=curve_radius_centimeters)
 
     def __str__(self) -> str:
-        return f"SteeringCommandGeneratorResult: [velocity={self._velocity_meters_per_second}, steering_angel={self._steering_angel}]"
+        return f"SteeringCommandGeneratorResult: " \
+               f"[velocity={self._velocity_meters_per_second}, " \
+               f"steering_angel={self._steering_angel}, " \
+               f"driving_direction={self._driving_direction}, " \
+               f"state_nomad={self._state}]"

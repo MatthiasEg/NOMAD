@@ -24,7 +24,7 @@ class ObjectDetector(Node):
         self._pylon_detector_receiver = Receiver("PYLON_DETECTOR")
         self._obstacle_detector_receiver = Receiver("OBSTACLE_DETECTOR")
         self._object_detector_sender = Sender(self._node_config_section)
-        self._fake_sonar = ReadSonar();
+        self._fake_sonar = ReadSonar()
 
     def _progress(self):
         pylon_detector_result = self._pylon_detector_receiver.receive()

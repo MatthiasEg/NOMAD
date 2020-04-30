@@ -16,6 +16,7 @@ from object_detection.object_detector.object_detector_result import DetectedObje
 import numpy as np
 
 from sonar_sensorinput.read_fake_sonar import ReadSonar, SonarData
+from statemachine.steering_command_generator_result import SteeringCommandGeneratorResult
 
 
 def draw_detected_objects(frame, detected_objects: List[DetectedObject]):
@@ -115,7 +116,7 @@ class NomadVisualizer(Node):
         frame_read = self._sensor_input_camera.get_frame()
         pickle_in = open(self.fake_objectresult_reader.getNextFilePath(), "rb")
         object_detector_result: ObjectDetectorResult = pickle.load(pickle_in)
-        steering_command_generator_result = self._steering_detector_receiver.receive()
+        steering_command_generator_result: SteeringCommandGeneratorResult = self._steering_detector_receiver.receive()
         sonar_data: SonarData = self._fake_sonar.get_Data()
         imu_data: IMUData = self._fake_imu.get_Data()
 
@@ -171,7 +172,11 @@ class NomadVisualizer(Node):
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5, [255, 0, 0], 2)
 
-
+        cv2.putText(frame_read, "state: " + str(steering_command_generator_result.state),
+                    (int(camera_center_range.max_x) - 200,
+                     int(camera_center_range.max_y) - 210),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5, [255, 0, 0], 2)
         cv2.putText(frame_read, "velocity m/s: " + str(steering_command_generator_result.velocity_meters_per_second),
                     (int(camera_center_range.max_x) - 200,
                      int(camera_center_range.max_y) - 195),
@@ -193,7 +198,7 @@ class NomadVisualizer(Node):
                     cv2.FONT_HERSHEY_SIMPLEX,
                     0.5, [255, 0, 0], 2)
 
-        cv2.imshow('Nomade_Visualizer', frame_read)
+        cv2.imshow('NOMAD_Visualizer', frame_read)
         cv2.waitKey(3)
 
     def _shut_down(self):

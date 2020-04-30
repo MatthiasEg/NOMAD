@@ -4,9 +4,8 @@ from threading import Thread
 from typing import List
 
 from communication.sender import Sender
+from imu_sensorinput.read_fake_imu import ReadIMU
 from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject
-from sensors.imu import Imu
-from sensors.sonar import Sonar
 from statemachine.danger_zone import DangerZone
 from statemachine.steering_command_generator_result import DrivingDirection
 from statemachine.steering_communicator import SteeringCommunicator
@@ -23,9 +22,8 @@ class Nomad:
     """
     _data: ObjectDetectorResult
     _pixel_grid: PixelGridNomad = PixelGridNomad()
-    _imu: Imu = Imu()
+    _imu: ReadIMU = ReadIMU()
     _obstacle_overcome_thread: Thread
-    _sonar: Sonar = Sonar()
     _danger_zone: DangerZone = DangerZone(_pixel_grid)
     _steering_communicator: SteeringCommunicator = SteeringCommunicator()
     _state = None
@@ -53,6 +51,7 @@ class Nomad:
             return
 
         if self._data.has_pylons():
+            self._logger.debug('Pylon detected! Checking for position..')
             most_right_pylon = self._pixel_grid.get_most_right_pylon(self.data.get_pylons_only())
             if self._pixel_grid.is_pylon_in_centered_area(most_right_pylon):
                 self._logger.debug('Pylon in center found! Initiating transition..')
@@ -68,13 +67,18 @@ class Nomad:
                     # Following steering command maybe not needed, as we already drive on orbit.
                     self._steering_communicator.send(velocity_meters_per_second=1,
                                                      curve_radius_centimeters=100,
-                                                     driving_direction=DrivingDirection.LEFT)
+                                                     driving_direction=DrivingDirection.LEFT,
+                                                     state_nomad=self._state)
                 else:
                     self._logger.debug(
                         f'Most right pylon with center \'{most_right_pylon.bounding_box.center()}\' was detected to the right of the center.'
                         f'This should actually not be possible with our orbit approach.'
                         f'Initiating fictitious pylon orbit..')
                     self._drive_fictitious_pylon_orbit()
+        else:
+            self._logger.debug('No pylons seen! '
+                               'Remain in State DestinationPylonUnknown..')
+            self._steering_communicator.resend_last_steering_command()
 
     def _process_state_PylonTargeted(self):
         """
@@ -118,25 +122,32 @@ class Nomad:
             # check next frame for distance
             self._logger.debug(f"Targeted Pylon with distance '{distance_to_targeted_pylon}' is to far way."
                                f" Keep driving straight towards it.")
+            self._steering_communicator.resend_last_steering_command()
             return
         elif 141 <= distance_to_targeted_pylon <= 150:
             self._logger.debug(f"Initiating bigger orbit radius of 100cm, because distance to targeted pylon is: '{distance_to_targeted_pylon}'")
-            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.RIGHT)
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.RIGHT,
+                                             state_nomad=self._state)
             time.sleep(1)  # TODO: Need to estimate how long it takes until the quarter right curve is driven. Race conditions with next frame?!
-            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=100, driving_direction=DrivingDirection.LEFT)
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=100, driving_direction=DrivingDirection.LEFT,
+                                             state_nomad=self._state)
             self.trigger(Transitions.OrbitTargeted_to_OrbitEntered.name)
         elif 91 <= distance_to_targeted_pylon <= 100:
             self._logger.debug(f"Initiating smaller orbit radius of 50cm, because distance to targeted pylon is: '{distance_to_targeted_pylon}'")
-            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.RIGHT)
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.RIGHT,
+                                             state_nomad=self._state)
             time.sleep(1)  # TODO: Need to estimate how long it takes until the quarter right curve is driven. Race conditions with next frame?!
-            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.LEFT)
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.LEFT,
+                                             state_nomad=self._state)
             self.trigger(Transitions.OrbitTargeted_to_OrbitEntered.name)
         else:
             self._logger.debug(f"Distance: '{distance_to_targeted_pylon}' to targeted pylon already to small to drive correct 50cm/100cm orbits!"
                                f" Trying to drive 50cm Orbit anyway!")
-            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.RIGHT)
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.RIGHT,
+                                             state_nomad=self._state)
             time.sleep(1)  # TODO: Need to estimate how long it takes until the quarter right curve is driven. Race conditions with next frame?!
-            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.LEFT)
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50, driving_direction=DrivingDirection.LEFT,
+                                             state_nomad=self._state)
             self.trigger(Transitions.OrbitTargeted_to_OrbitEntered.name)
 
     def _process_state_OrbitEntered(self):
@@ -189,7 +200,7 @@ class Nomad:
         if not self._obstacle_overcome_thread.is_alive():
             # Drive left curve first
             self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50,
-                                             driving_direction=DrivingDirection.RIGHT)
+                                             driving_direction=DrivingDirection.RIGHT, state_nomad=self._state)
             self.trigger(Transitions.TransitEndangered_to_DestinationPylonUnknown.name)
 
     def _update_targeted_pylon(self):
@@ -222,13 +233,15 @@ class Nomad:
             # drive to the right to center the pylon
             # we need some real good calculations to improve performance. Should be done with real world distance and not pixel distance
             if -10 < x_distance_to_center < 0:
-                self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=2, driving_direction=DrivingDirection.RIGHT)
+                self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=2, driving_direction=DrivingDirection.RIGHT,
+                                                 state_nomad=self._state)
             else:
                 pass
         else:
             # drive to the left to center the pylon
             # we need some real good calculations to improve performance. Should be done with real world distance and not pixel distance
-            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=2, driving_direction=DrivingDirection.LEFT)
+            self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=2, driving_direction=DrivingDirection.LEFT,
+                                             state_nomad=self._state)
 
             pass
 
@@ -237,13 +250,13 @@ class Nomad:
         :return:
         """
         self._logger.debug("Driving fictitious pylon orbit")
-        pylon_orbit_speed_meters_per_second: float = 1
+        pylon_orbit_speed_meters_per_second: float = 0.1
         distance_to_drive_right_curve_in_meters = 0.61
         self._steering_communicator.send(velocity_meters_per_second=pylon_orbit_speed_meters_per_second, curve_radius_centimeters=50,
-                                         driving_direction=DrivingDirection.RIGHT)
-        time.sleep(distance_to_drive_right_curve_in_meters/pylon_orbit_speed_meters_per_second)
+                                         driving_direction=DrivingDirection.RIGHT, state_nomad=self._state)
+        time.sleep(distance_to_drive_right_curve_in_meters / pylon_orbit_speed_meters_per_second)
         self._steering_communicator.send(velocity_meters_per_second=pylon_orbit_speed_meters_per_second, curve_radius_centimeters=100,
-                                         driving_direction=DrivingDirection.LEFT)
+                                         driving_direction=DrivingDirection.LEFT, state_nomad=self._state)
 
     def _set_velocity(self, new_velocity_meters_per_second: float):
         """
@@ -252,7 +265,7 @@ class Nomad:
         the max velocity is not already reached.
         :return:
         """
-        self._steering_communicator.send(velocity_meters_per_second=new_velocity_meters_per_second)
+        self._steering_communicator.send(velocity_meters_per_second=new_velocity_meters_per_second, state_nomad=self._state)
 
     def _get_velocity(self) -> float:
         return self._steering_communicator.last_sent_velocity()
@@ -275,11 +288,11 @@ class Nomad:
 
         while pitch_down_noticed is False:
             while pitch_up_noticed:
-                gyro_x, _, _ = self._imu.get_gyro()
+                gyro_x = self._imu.get_Data().gyro_x
                 if gyro_x >= 10:
                     pitch_up_noticed = True
                     self._logger.info('Pitch up noticed!')
-            gyro_x, _, _ = self._imu.get_gyro()
+            gyro_x = self._imu.get_Data().gyro_x
             if gyro_x <= -10:
                 pitch_down_noticed = True
                 self._logger.info('Pitch down noticed!')
@@ -287,7 +300,7 @@ class Nomad:
         # Pitch up and down noticed, now check if gyro values remain stable (NOMAD in more or less straight position)
         straight_gyro_x_values: List[float] = []
         while len(straight_gyro_x_values) < 5:
-            gyro_x, _, _ = self._imu.get_gyro()
+            gyro_x = self._imu.get_Data().gyro_x
             if -1.5 < gyro_x < 1.5:
                 straight_gyro_x_values.append(gyro_x)
         self._logger.info('NOMADs x axis remained straight for 5 times. The obstacle seems to have been overcome.')
@@ -300,7 +313,8 @@ class Nomad:
         self._danger_zone.reset()
 
     def _drive_straight(self, velocity: int):
-        self._steering_communicator.send(velocity_meters_per_second=velocity, curve_radius_centimeters=0, driving_direction=DrivingDirection.STRAIGHT)
+        self._steering_communicator.send(velocity_meters_per_second=velocity, curve_radius_centimeters=0, driving_direction=DrivingDirection.STRAIGHT,
+                                         state_nomad=self._state)
 
     @property
     def data(self) -> ObjectDetectorResult:
