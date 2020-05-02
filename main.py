@@ -54,8 +54,8 @@ def main():
     visualizer_nomad_process = Process(target=startNomadVisualizer, args=())
     visualizer_nomad_process.start()
 
-    # uart_connector_process = Process(target=startUartConnector(), args=())
-    # uart_connector_process.start()
+    uart_connector_process = Process(target=startUartConnector(), args=())
+    uart_connector_process.start()
 
 
 if __name__ == '__main__':
