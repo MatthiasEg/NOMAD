@@ -49,11 +49,17 @@ class SteeringCommunicator:
         self._last_steering_command_sent = command
         self._sender.send(command)
 
-    def resend_last_steering_command(self):
-        self._sender.send(self._last_steering_command_sent)
+    def resend_last_steering_command(self, new_state: State):
+        self._sender.send(SteeringCommandGeneratorResult(velocity_meters_per_second=self._last_steering_command_sent.velocity_meters_per_second,
+                                                         curve_radius_centimeters=self._last_steering_command_sent.curve_radius_centimeters,
+                                                         driving_direction=self._last_steering_command_sent.driving_direction,
+                                                         state_nomad=new_state))
+
+    def last_sent_velocity(self) -> float:
+        return self._last_steering_command_sent.velocity_meters_per_second
 
     @property
-    def sender(self):
+    def sender(self) -> Sender:
         return self._sender
 
     @sender.setter

@@ -31,6 +31,7 @@ class DangerZone:
             (pylon.distance.value <= max_diagonal_value) and
             (pylon in targeted_pylon.relative_detected_objects_from_relative_type(RelativeObjectType.IN_FRONT))
         ]
+        print(f"left_relevant_pylons_compared_to_diagonal_and_relative_type: {str(left_relevant_pylons_compared_to_diagonal_and_relative_type)}")
         self._dangerous_pylons_current_evaluation = left_relevant_pylons_compared_to_diagonal_and_relative_type
         if len(self._dangerous_pylons_current_evaluation) != 0:
             self._find_nearest_dangerous_pylon()

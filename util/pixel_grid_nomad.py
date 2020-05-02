@@ -35,7 +35,7 @@ class PixelGridNomad:
     _y: int = 832
     _center_x: int = _x / 2
     _center_y: int = _y / 2
-    _x_center_width = 80
+    _x_center_width = 100
 
     def is_pylon_in_centered_area(self, pylon: DetectedObject) -> bool:
         pylon_x = pylon.bounding_box.center_x()

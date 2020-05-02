@@ -155,7 +155,6 @@ class TransitionsNomad:
             'trigger': Transitions.internal_ObstacleDetected.name,
             'source': States.ObstacleDetected.name,
             'dest': None,
-            'before': '_slow_down',
             'after': '_process_state_ObstacleDetected'
         }
     ]

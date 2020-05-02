@@ -22,12 +22,12 @@ class States(Enum):
 class StatesNomad:
     _states = [
         State(name=States.Start.name),
-        State(name=States.DestinationPylonUnknown.name),
+        State(name=States.DestinationPylonUnknown.name, on_enter='clear_danger_zone', on_exit='on_exit_DestinationPylonUnknown'),
         State(name=States.PylonTargeted.name),
         State(name=States.TransitEndangered.name, on_exit='clear_danger_zone'),
-        State(name=States.ObstacleDetected.name, on_enter='before_obstacle'),
-        State(name=States.OrbitTargeted.name),
-        State(name=States.OrbitEntered.name),
+        State(name=States.ObstacleDetected.name, on_exit='on_exit_ObstacleDetected'),
+        State(name=States.OrbitTargeted.name, on_exit='on_exit_OrbitTargeted'),
+        State(name=States.OrbitEntered.name, on_exit='on_exit_OrbitEntered')
     ]
 
     @property

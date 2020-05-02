@@ -5,6 +5,7 @@ from transitions import Machine
 from communication.node import Node
 from communication.receiver import Receiver
 from communication.sender import Sender
+from imu_sensorinput.read_fake_imu import ReadIMU
 from statemachine.nomad import Nomad
 from statemachine.states_nomad import StatesNomad
 from statemachine.transitions_nomad import TransitionsNomad
@@ -13,6 +14,7 @@ from statemachine.transitions_nomad import TransitionsNomad
 class SteeringCommandGenerator(Node):
     _node_config_name = "STEERING_COMMAND_GENERATOR"
     _logger = logging.getLogger("SteeringCommandGenerator")
+    _imu_data_reader = ReadIMU()
 
     def __init__(self):
         super().__init__(self._node_config_name)
@@ -42,6 +44,7 @@ class SteeringCommandGenerator(Node):
     def _progress(self):
 
         self._nomad.data = self._object_detector_receiver.receive()
+        self._nomad.imu_data = self._imu_data_reader.get_Data()
         # test data
         # self._nomad.data = self._create_fake_data()
 

@@ -215,6 +215,8 @@ class ObjectDetectorResult:
         else:
             raise Exception('Called nearest_square_timber, when no square timber is available!')
 
+
+
     @property
     def get_detected_objects(self) -> List[DetectedObject]:
         return self._detected_objects
