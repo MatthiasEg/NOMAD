@@ -7,7 +7,7 @@ import logging
 # Config Logging
 from statemachine.nomad_visualizer import NomadVisualizer
 from statemachine.steering_command_generator import SteeringCommandGenerator
-from uart_connector.uart_connector import UartConnector
+from uart_connector.uart_connector import UartConnector, FileConnector
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - [%(threadName)s] - %(message)s',
@@ -41,6 +41,11 @@ def startUartConnector():
     uart_connector.start()
 
 
+def startFileConnector():
+    file_connector = FileConnector()
+    file_connector.start()
+
+
 def main():
     logger = logging.getLogger("STARTUP")
     logger.info("starting server...")
@@ -51,11 +56,11 @@ def main():
     steering_command_generator_process = Process(target=startSteeringCommandGenerator, args=())
     steering_command_generator_process.start()
 
-    visualizer_nomad_process = Process(target=startNomadVisualizer, args=())
-    visualizer_nomad_process.start()
+    # visualizer_nomad_process = Process(target=startNomadVisualizer, args=())
+    # visualizer_nomad_process.start()
 
-    uart_connector_process = Process(target=startUartConnector(), args=())
-    uart_connector_process.start()
+    file_connector_process = Process(target=startFileConnector(), args=())
+    file_connector_process.start()
 
 
 if __name__ == '__main__':
