@@ -49,7 +49,7 @@ class FileConnector(Node):
     def _start_up(self):
         self._steering_command_generator_receiver = Receiver("STEERING_COMMAND_GENERATOR")
         self._file = open('steeringcommands.txt', 'w')
-        self._file.write('Steering angle;Velocity\n')
+        self._file.write('Steering angle(RAD);Velocity(m/s)\n')
         self._file.flush()
 
     def _progress(self):

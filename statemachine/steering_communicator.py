@@ -58,6 +58,9 @@ class SteeringCommunicator:
     def last_sent_velocity(self) -> float:
         return self._last_steering_command_sent.velocity_meters_per_second
 
+    def last_sent_curve_radius(self) -> float:
+        return self._last_steering_command_sent.curve_radius_centimeters
+
     @property
     def sender(self) -> Sender:
         return self._sender

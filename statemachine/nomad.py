@@ -33,7 +33,11 @@ class Nomad:
 
     # Start variables
     _start_time = 0
+    _start_scene_completed = False
     _fictitious_pylon_orbit_waiting_time_right_curve = 5  # seconds
+
+    # DestinationPylonUnknown variables
+    _should_drive_fictitious_pylon_orbit = False
 
     # OrbitTargeted variables
     _orbit_targeted_time_first_command = 0
@@ -63,7 +67,7 @@ class Nomad:
         :return:
         """
         # Hack to drive fictitious pylon orbit correctly at the beginning
-        if self._start_time != 0:
+        if not self._start_scene_completed:
             current_time = time.time()
             if current_time < self._start_time + self._fictitious_pylon_orbit_waiting_time_right_curve:
                 self._steering_communicator.resend_last_steering_command(new_state=self._state)
@@ -71,7 +75,8 @@ class Nomad:
             else:
                 self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=100,
                                                  driving_direction=DrivingDirection.LEFT, state_nomad=self._state)
-                self._start_time = 0
+                self._start_scene_completed = True
+                return
 
         if self._check_for_square_timber_in_front(distance_in_centimeters=50):
             self.trigger(Transitions.DestinationPylonUnknown_to_ObstacleDetected.name)
@@ -92,10 +97,16 @@ class Nomad:
                         f'Most right pylon with center \'{most_right_pylon.bounding_box.center()}\' was detected to the left of the center.'
                         f'Keep driving on orbit.')
                     # Following steering command maybe not needed, as we already drive on orbit.
-                    self._steering_communicator.send(velocity_meters_per_second=1,
-                                                     curve_radius_centimeters=100,
-                                                     driving_direction=DrivingDirection.LEFT,
-                                                     state_nomad=self._state)
+                    if self._steering_communicator.last_sent_curve_radius() == 50 and not self._should_drive_fictitious_pylon_orbit:
+                        self._steering_communicator.send(velocity_meters_per_second=1,
+                                                         curve_radius_centimeters=50,
+                                                         driving_direction=DrivingDirection.LEFT,
+                                                         state_nomad=self._state)
+                    else:
+                        self._steering_communicator.send(velocity_meters_per_second=1,
+                                                         curve_radius_centimeters=100,
+                                                         driving_direction=DrivingDirection.LEFT,
+                                                         state_nomad=self._state)
                 else:
                     self._logger.debug(
                         f'Most right pylon with center \'{most_right_pylon.bounding_box.center()}\' was detected to the right of the center.'
@@ -176,6 +187,7 @@ class Nomad:
             self._logger.debug(f"Targeted Pylon with distance '{distance_to_targeted_pylon}' is to far way."
                                f" Keep driving straight towards it.")
             self._steering_communicator.resend_last_steering_command(new_state=self.state)
+            self._last_distance_targeted_pylon = distance_to_targeted_pylon
         elif 141 <= distance_to_targeted_pylon <= 150:
             self._logger.debug(f"Initiating bigger orbit radius of 100cm, because distance to targeted pylon is: '{distance_to_targeted_pylon}'")
             if self._orbit_targeted_time_first_command == 0:
@@ -290,6 +302,7 @@ class Nomad:
         self._logger.debug("Driving fictitious pylon orbit")
         self._steering_communicator.send(velocity_meters_per_second=1, curve_radius_centimeters=50,
                                          driving_direction=DrivingDirection.RIGHT, state_nomad=self._state)
+        self._should_drive_fictitious_pylon_orbit = True
 
     def _set_velocity(self, new_velocity_meters_per_second: float):
         """
@@ -341,12 +354,10 @@ class Nomad:
 
     def on_exit_DestinationPylonUnknown(self):
         """
-        Resets the timer set in Start state when State DestinationPylonUnknown is left. Start timer is handled in this method as
-        NOMAD is immediately in State DestinationPylonUnknown at the beginning of the video
+        Resets the variables used in DestinationPylonUnknown when state is left
         :return:
         """
-        self._logger.debug('Start timer reset')
-        self._start_time = 0
+        self._should_drive_fictitious_pylon_orbit = False
 
     def on_exit_OrbitTargeted(self):
         """
