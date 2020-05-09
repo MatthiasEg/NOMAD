@@ -6,7 +6,7 @@ from communication.sender import Sender
 from statemachine.steering_command_generator_result import SteeringCommandGeneratorResult, DrivingDirection
 
 
-class SteeringCommunicator:
+class SteeringCommandCommunicator:
     """
     Communicates between SteeringCommandGenerator and Uart Connector
     """

@@ -9,7 +9,7 @@ from imu_sensorinput.read_fake_imu import ReadIMU, IMUData
 from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject
 from statemachine.danger_zone import DangerZone
 from statemachine.steering_command_generator_result import DrivingDirection
-from statemachine.steering_communicator import SteeringCommunicator
+from statemachine.steering_communicator import SteeringCommandCommunicator
 from statemachine.transitions_nomad import Transitions
 from util.pixel_grid_nomad import PixelGridNomad, PylonSide
 
@@ -24,9 +24,8 @@ class Nomad:
     _data: ObjectDetectorResult
     _IMU_data: IMUData
     _pixel_grid: PixelGridNomad = PixelGridNomad()
-    _obstacle_overcome_thread: Thread
     _danger_zone: DangerZone = DangerZone(_pixel_grid)
-    _steering_communicator: SteeringCommunicator = SteeringCommunicator()
+    _steering_communicator: SteeringCommandCommunicator = SteeringCommandCommunicator()
     _state = None
     _logger = logging.getLogger("NomadModel")
     _targeted_pylon: DetectedObject
