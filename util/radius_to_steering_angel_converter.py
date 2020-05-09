@@ -11,9 +11,9 @@ class RadiusToSteeringAngelConverter:
 
     def convert(self, curve_radius_centimeters: float) -> float:
         if curve_radius_centimeters < 0:  # driving left curve
-            return (-1) * np.arctan(
+            return 180/np.pi * (-1) * np.arctan(
                 self._wheel_distance / (np.sqrt((curve_radius_centimeters ** 2) - (self._distance_center_of_gravity_read_wheels ** 2))))
         elif curve_radius_centimeters > 0:  # driving right curve
-            return np.arctan(self._wheel_distance / (np.sqrt((curve_radius_centimeters ** 2) - (self._distance_center_of_gravity_read_wheels ** 2))))
+            return 180/np.pi * np.arctan(self._wheel_distance / (np.sqrt((curve_radius_centimeters ** 2) - (self._distance_center_of_gravity_read_wheels ** 2))))
         else:
             self._logger.error("Curve radius was 0, which should not be possible here!")
