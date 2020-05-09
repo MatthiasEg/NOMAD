@@ -29,7 +29,8 @@ class DangerZone:
         left_relevant_pylons_compared_to_diagonal_and_relative_type: List[DetectedObject] = [
             pylon for pylon in left_pylons_without_targeted_pylon if
             (pylon.distance.value <= max_diagonal_value) and
-            (pylon in targeted_pylon.relative_detected_objects_from_relative_type(RelativeObjectType.IN_FRONT))
+            (pylon in targeted_pylon.relative_detected_objects_from_relative_type(RelativeObjectType.IN_FRONT)) and
+            (pylon in targeted_pylon.relative_detected_objects_from_relative_type(RelativeObjectType.LEFT))
         ]
         print(f"left_relevant_pylons_compared_to_diagonal_and_relative_type: {str(left_relevant_pylons_compared_to_diagonal_and_relative_type)}")
         self._dangerous_pylons_current_evaluation = left_relevant_pylons_compared_to_diagonal_and_relative_type
