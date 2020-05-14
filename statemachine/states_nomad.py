@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import List
 
 from transitions import State
 
@@ -20,7 +21,7 @@ class States(Enum):
 
 
 class StatesNomad:
-    _states = [
+    _states: List[States] = [
         State(name=States.Start.name),
         State(name=States.DestinationPylonUnknown.name, on_enter='clear_danger_zone', on_exit='on_exit_DestinationPylonUnknown'),
         State(name=States.PylonTargeted.name),

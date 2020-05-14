@@ -26,21 +26,21 @@ class DangerZone:
         all_pylons_left_frame_side = self._pixel_grid.filter_pylons_of_area(all_pylons, GridArea.LEFT)
         left_pylons_without_targeted_pylon: List[DetectedObject] = [pylon for pylon in all_pylons_left_frame_side if pylon != targeted_pylon]
 
-        left_relevant_pylons_compared_to_diagonal_and_relative_type: List[DetectedObject] = [
+        left_in_front_relevant_pylons_compared_to_diagonal_and_relative_type: List[DetectedObject] = [
             pylon for pylon in left_pylons_without_targeted_pylon if
             (pylon.distance.value <= max_diagonal_value) and
             (pylon in targeted_pylon.relative_detected_objects_from_relative_type(RelativeObjectType.IN_FRONT)) and
             (pylon in targeted_pylon.relative_detected_objects_from_relative_type(RelativeObjectType.LEFT))
         ]
-        print(f"left_relevant_pylons_compared_to_diagonal_and_relative_type: {str(left_relevant_pylons_compared_to_diagonal_and_relative_type)}")
-        self._dangerous_pylons_current_evaluation = left_relevant_pylons_compared_to_diagonal_and_relative_type
+        print(f"left_in_front_relevant_pylons_compared_to_diagonal_and_relative_type: {str(left_in_front_relevant_pylons_compared_to_diagonal_and_relative_type)}")
+        self._dangerous_pylons_current_evaluation = left_in_front_relevant_pylons_compared_to_diagonal_and_relative_type
         if len(self._dangerous_pylons_current_evaluation) != 0:
             self._find_nearest_dangerous_pylon()
 
     def has_dangerous_pylons(self) -> bool:
         """
         Checks if there is a pylon in the danger zone.
-        :return: true if pylon in danger zone, false if not.
+        :Dreturn: true if pylon in danger zone, false if not.
         """
         return len(self._dangerous_pylons_current_evaluation) != 0
 

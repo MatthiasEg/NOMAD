@@ -1,11 +1,10 @@
-import datetime
+import logging
 import logging
 import time
-from threading import Thread
 from typing import List
 
 from communication.sender import Sender
-from imu_sensorinput.read_fake_imu import ReadIMU, IMUData
+from imu_sensorinput.read_fake_imu import IMUData
 from object_detection.object_detector.object_detector_result import ObjectDetectorResult, DetectedObject
 from statemachine.danger_zone import DangerZone
 from statemachine.steering_command_generator_result import DrivingDirection
