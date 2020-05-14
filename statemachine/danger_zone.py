@@ -40,7 +40,7 @@ class DangerZone:
     def has_dangerous_pylons(self) -> bool:
         """
         Checks if there is a pylon in the danger zone.
-        :Dreturn: true if pylon in danger zone, false if not.
+        :return: true if pylon in danger zone, false if not.
         """
         return len(self._dangerous_pylons_current_evaluation) != 0
 

@@ -19,16 +19,13 @@ class SteeringCommandGenerator(Node):
     def __init__(self):
         super().__init__(self._node_config_name)
 
-        self._states = StatesNomad().states
-        self._transitions = TransitionsNomad().transitions
-
         self._nomad = Nomad()
 
         # https://github.com/pytransitions/transitions#automatic-transitions-for-all-states
         self._state_machine = Machine(
             model=self._nomad,
-            states=self._states,
-            transitions=self._transitions,
+            states=StatesNomad().states,
+            transitions=TransitionsNomad().transitions,
             initial="Start",
             auto_transitions=False,
             model_attribute='_state',
